@@ -1,0 +1,138 @@
+#version: '3'
+#services:
+#  db:
+#    platform: linux/x86_64
+#    image: mysql:8
+#    ports:
+#      - "3306:3306"
+#    environment:
+#      - MYSQL_DATABASE='BFIT'
+#      - MYSQL_USER='root'
+#      - MYSQL_PASSWORD='123Qwe123='
+#      - MYSQL_ROOT_PASSWORD='123Qwe123='
+#      - MYSQL_HOST=''
+#    volumes:
+#      - /tmp/app/mysqld:/var/run/mysqld
+#      - ./db:/var/lib/mysql
+#  web:
+#    build: .
+#    command: python manage.py runserver 0.0.0.0:8000
+#    ports:
+#      - "8000:8000"
+#    volumes:
+#      - .:/app
+#      - /tmp/app/mysqld:/run/mysqld
+#    depends_on:
+#      - db
+version: "3.8"
+
+services:
+  mysql-db:
+    build:
+      context: .
+      dockerfile: ./docker/mysql/Dockerfile
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3306:3306"
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    env_file: .env
+    restart: always
+    volumes:
+      - .:/app/
+    depends_on:
+      - mysql-db
+#    working_dir: "/app/mysql_example"
+    expose:
+      - 8000
+    ports:
+      - "8000:8000"
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+
+volumes:
+  mysql_data:
+
+
+#version: '3'
+#
+#services:
+#  db:
+#    platform: linux/x86_64
+#    image: mysql:5.7
+#    ports:
+#      - '3306:3306'
+#    environment:
+#       MYSQL_DATABASE: 'BFIT'
+#       MYSQL_USER: ''
+#       MYSQL_PASSWORD: '123Qwe123='
+#       MYSQL_ROOT_PASSWORD: '123Qwe123='
+#  web:
+#    build: .
+#    command: python manage.py runserver 0.0.0.0:8000
+#    volumes:
+#      - .:/my_app_dir
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      - db
+
+
+
+#version: "3.8"
+#services:
+#  db:
+#    image: mysql
+#    container_name: db
+#    restart: always
+#    ports:
+#      - '3307:3306'
+#    environment:
+#      MYSQL_DATABASE: 'BFIT'
+##      MYSQL_USER: 'root'
+#      MYSQL_ROOT_USER: root
+#      MYSQL_PASSWORD: '123Qwe123='
+#      MYSQL_ROOT_PASSWORD: '123Qwe123='
+###       MYSQL_ALLOW_EMPTY_PASSWORD: 'true'
+##    volumes:
+##      - ./data/mysql/db:/var/lib/mysql
+#
+#  web:
+#    build: .
+#    command: python manage.py runserver 0.0.0.0:8000
+#    volumes:
+#      - .:/usr/src/app/
+#    ports:
+#      - 8000:8000
+##    env_file:
+##      - ./.env
+#    depends_on:
+#      - db
+#
+##  app:
+##    build: .
+##    volumes:
+##      - .:/django
+##    ports:
+##      - 8000:8000
+##    image: app:django
+##    container_name: django_container
+##    command: python manage.py runserver 0.0.0.0:8000
+##    depends_on:
+##      - db
+#
+##  db:
+##    image: postgres
+##    volumes:
+##      - ./data/db:/var/lib/postgresql/data
+##    environment:
+##      - POSTGRES_DB=postgres
+##      - POSTGRES_USER=postgres
+##      - POSTGRES_PASSWORD=postgres
+##    container_name: postgres_db
