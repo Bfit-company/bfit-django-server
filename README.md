@@ -7,9 +7,9 @@
 Welcome to the Sport Marketplace Platform, here you can find your perfect coach, see his/her rates, coast, location, posts and more!
 
 ## Project Technology:
-**Backed**   - Django Rest Framework.
-**DB**       - MYSQL (Now wrote with SQLITE. Soon it is going to be MYSQL)
-**Frontend** - React Native / ReactJS
+- **Backed**   - Django Rest Framework.
+- **DB**       - MYSQL (Now wrote with SQLITE. Soon it is going to be MYSQL)
+- **Frontend** - React Native / ReactJS
 
 # How To Start 
 project start is super easy,
