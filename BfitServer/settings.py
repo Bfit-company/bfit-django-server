@@ -122,11 +122,11 @@ SWAGGER_SETTINGS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'BFIT',
-        'HOST': 'database-bfit.c1dgbjolop5m.eu-central-1.rds.amazonaws.com',
-        'PORT': '3306',
-        'USER': 'admin',
-        'PASSWORD': 'Bfit!2345',
+        'NAME': os.getenv('MYSQL_DATABASE'),
+        'HOST': os.getenv('MYSQL_DATABASE_HOST'),
+        'PORT': os.getenv('MYSQL_DATABASE_PORT'),
+        'USER': os.getenv('MYSQL_USER'),
+        'PASSWORD': os.getenv('MYSQL_ROOT_PASSWORD'),
     }
 }
 
