@@ -12,6 +12,21 @@ Welcome to the Sport Marketplace Platform, here you can find your perfect coach,
 - **Frontend** - React Native / ReactJS
 
 ---
+
+#Django Rest Framework Files 
+where are all the code?
+1. Each module has models file\
+   for example: '/sport_type/models.py'
+<br/>
+<br/>
+2. For each module you have "api" folder. in that folder you have the api code.\
+here you can find this files:
+- serializer.py
+- urls.py
+- views.py
+
+    For example '/coach_app/api'
+3. Tests files explain here -> [Server Tests](#server-tests)
 # How To Start 
 project start is super easy,
 
@@ -25,7 +40,7 @@ great! now you got the project.
 
 - run the server
 ```bash
-sh docker_run
+sh docker_run.sh
 ```
 The server will run on port **8000**
 
@@ -33,7 +48,7 @@ The server will run on port **8000**
 For stop the server just write **CRL + C**
 
 ---
-# Server Tests
+#<a name="server-tests"></a>Server Tests
 As you know great project needs to be tested
 ### Tests in Django - 
 In django every module has test file.(all the modules extends from **PYTEST**) 

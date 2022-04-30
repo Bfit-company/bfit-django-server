@@ -26,18 +26,20 @@ class PersonSerializer(serializers.ModelSerializer):
         model = PersonDB
         fields = "__all__"
 
+    # def create(self, validated_data):
+    #     pass
     # def save(self):
-    #     phone_number = self.validated_data['phone_number']
-    #
-    #     if PersonDB.objects.filter(phone_number=phone_number).exists():
-    #         raise serializers.ValidationError({'error': 'invalid phone number'})
-    #
-    #     account = User(
-    #         email=self.validated_data['email'],
-    #     )
-    #     account.set_password(password)
-    #     account.save()
-    #     return account
+        # phone_number = self.validated_data['phone_number']
+        #
+        # if PersonDB.objects.filter(phone_number=phone_number).exists():
+        #     raise serializers.ValidationError({'error': 'invalid phone number'})
+        #
+        # account = User(
+        #     email=self.validated_data['email'],
+        # )
+        # account.set_password(password)
+        # account.save()
+        # return account
 
     def get_rating_coach(self, obj):
         return RatingSerializer(obj.rating.all(), many=True).data

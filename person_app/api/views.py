@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -11,17 +11,16 @@ from rest_framework.response import Response
 
 from sport_type_app.models import SportTypeDB
 from trainee_app.models import TraineeDB
-from user_app import models
+from rest_framework.views import APIView
 
 
-@api_view(['GET', 'POST'])
-def person_list(request):
-    if request.method == 'GET':
+class PersonList(APIView):
+    def get(self,request):
         all_trainee_list = PersonDB.objects.all()
         serializer = PersonSerializer(all_trainee_list, many=True)
         return Response(serializer.data)
 
-    if request.method == 'POST':
+    def post(self,request):
         serializer = PersonSerializer(data=request.data)
         if serializer.is_valid():
 
@@ -44,6 +43,62 @@ def person_list(request):
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def create_person(data):
+    serializer = PersonSerializer(data=data)
+    if serializer.is_valid():
+
+        if data["phone_number"] and phone_number_exists(data["phone_number"]):
+            return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # add favorite sport to coach list
+        fav_arr = []
+        for fav in data["fav_sport"]:
+            fav_obj = get_object_or_404(SportTypeDB, pk=fav)
+            fav_arr.append(fav_obj)
+
+        # create person
+        person_obj = serializer.save()
+        for fav in fav_arr:
+            person_obj.fav_sport.add(fav)
+        person_obj.save()
+
+        serializer = PersonSerializer(person_obj)
+        return Response(serializer.data)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def person_list(request):
+    if request.method == 'GET':
+        all_trainee_list = PersonDB.objects.all()
+        serializer = PersonSerializer(all_trainee_list, many=True)
+        return Response(serializer.data)
+
+    if request.method == 'POST':
+        return create_person(request.data)
+        # serializer = PersonSerializer(data=request.data)
+        # if serializer.is_valid():
+        #
+        #     if request.data["phone_number"] and phone_number_exists(request.data["phone_number"]):
+        #         return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
+        #
+        #     # add favorite sport to coach list
+        #     fav_arr = []
+        #     for fav in request.data["fav_sport"]:
+        #         fav_obj = get_object_or_404(SportTypeDB, pk=fav)
+        #         fav_arr.append(fav_obj)
+        #
+        #     # create person
+        #     person_obj = serializer.save()
+        #     for fav in fav_arr:
+        #         person_obj.fav_sport.add(fav)
+        #     person_obj.save()
+        #
+        #     serializer = PersonSerializer(person_obj)
+        #     return Response(serializer.data)
+        # else:
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'DELETE', 'PUT'])

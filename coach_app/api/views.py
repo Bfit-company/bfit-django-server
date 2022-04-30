@@ -16,6 +16,23 @@ from person_app.models import PersonDB
 from sport_type_app.models import SportTypeDB
 from user_app import models
 
+def create_coach(data):
+    serializer = CoachSerializer(data=data)
+    if serializer.is_valid():
+        person_id = data.get("person")
+        person_check = CoachDB.objects.filter(person=person_id)
+        person_coach = PersonDB.objects.get(pk=person_id)
+        # check if the person is not coach
+        if not person_coach.is_coach:
+            return Response({"error": "the user is not coach"})
+        if not person_check.exists():
+            serializer.save(person=PersonDB.objects.get(pk=person_id))
+            return Response(serializer.data)
+        else:
+            return Response({"error": "the coach already exist"})
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'POST'])
 def coach_list(request):
@@ -23,23 +40,24 @@ def coach_list(request):
         all_trainee_list = CoachDB.objects.all()
         serializer = CoachSerializer(all_trainee_list, many=True)
         return Response(serializer.data)
-
     if request.method == 'POST':
-        serializer = CoachSerializer(data=request.data)
-        if serializer.is_valid():
-            person_id = request.data.get("person")
-            person_check = CoachDB.objects.filter(person=person_id)
-            person_coach = PersonDB.objects.get(pk=person_id)
-            # check if the person is not coach
-            if not person_coach.is_coach:
-                return Response({"error": "the user is not coach"})
-            if not person_check.exists():
-                serializer.save(person=PersonDB.objects.get(pk=person_id))
-                return Response(serializer.data)
-            else:
-                return Response({"error": "the coach already exist"})
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return create_coach(request.data)
+    # if request.method == 'POST':
+    #     serializer = CoachSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         person_id = request.data.get("person")
+    #         person_check = CoachDB.objects.filter(person=person_id)
+    #         person_coach = PersonDB.objects.get(pk=person_id)
+    #         # check if the person is not coach
+    #         if not person_coach.is_coach:
+    #             return Response({"error": "the user is not coach"})
+    #         if not person_check.exists():
+    #             serializer.save(person=PersonDB.objects.get(pk=person_id))
+    #             return Response(serializer.data)
+    #         else:
+    #             return Response({"error": "the coach already exist"})
+    #     else:
+    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'DELETE', 'PUT'])

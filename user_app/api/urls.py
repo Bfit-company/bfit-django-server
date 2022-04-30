@@ -3,9 +3,9 @@ from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 from user_app.api.views import registration_view, UpdateUser
 from user_app.api.views import (
+    login_view,
     logout_view,
     full_user_create,
-    login_view,
     ChangePasswordView,
     # send_mail,
 )

@@ -112,23 +112,23 @@ SWAGGER_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-#
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'BFIT',
-#         'HOST': 'localhost',
-#         'PORT': '3306',
-#         'USER': 'root',
-#         'PASSWORD': '123Qwe123=',
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+#
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'BFIT',
+        'HOST': 'database-bfit.c1dgbjolop5m.eu-central-1.rds.amazonaws.com',
+        'PORT': '3306',
+        'USER': 'admin',
+        'PASSWORD': 'Bfit!2345',
+    }
+}
 
 # DATABASES = {
 #     'default': {

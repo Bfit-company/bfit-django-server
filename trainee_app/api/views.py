@@ -15,7 +15,22 @@ from user_app import models
 from django.core.exceptions import ObjectDoesNotExist
 
 
+def create_trainee(data):
+    serializer = TraineeSerializer(data=data)
+    if serializer.is_valid():
+        person_id = data.get("person")
+        person_check = TraineeDB.objects.filter(person=person_id)
 
+        # check if the person is not coach
+        if not person_check.exists():
+            try:
+                serializer.save(person=PersonDB.objects.get(pk=person_id))
+                return Response(serializer.data)
+            except ObjectDoesNotExist:
+                return Response({"error": "the trainee already exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
 def trainee_list(request):
@@ -25,21 +40,22 @@ def trainee_list(request):
         return Response(serializer.data)
 
     if request.method == 'POST':
-        serializer = TraineeSerializer(data=request.data)
-        if serializer.is_valid():
-            person_id = request.data.get("person")
-            person_check = TraineeDB.objects.filter(person=person_id)
-
-            # check if the person is not coach
-            if not person_check.exists():
-                try:
-                    serializer.save(person=PersonDB.objects.get(pk=person_id))
-                    return Response(serializer.data)
-                except ObjectDoesNotExist:
-                    return Response({"error": "the trainee already exist"},status=status.HTTP_400_BAD_REQUEST)
-
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return create_trainee(request.data)
+        # serializer = TraineeSerializer(data=request.data)
+        # if serializer.is_valid():
+        #     person_id = request.data.get("person")
+        #     person_check = TraineeDB.objects.filter(person=person_id)
+        #
+        #     # check if the person is not coach
+        #     if not person_check.exists():
+        #         try:
+        #             serializer.save(person=PersonDB.objects.get(pk=person_id))
+        #             return Response(serializer.data)
+        #         except ObjectDoesNotExist:
+        #             return Response({"error": "the trainee already exist"},status=status.HTTP_400_BAD_REQUEST)
+        #
+        # else:
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

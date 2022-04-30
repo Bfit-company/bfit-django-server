@@ -5,12 +5,12 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, schema
 import requests
 from rest_framework.utils import json
 from django.db.models import Q, F, Value as V
 from rest_framework.views import APIView
-
+from rest_framework.generics import GenericAPIView
 from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
 from person_app.models import PersonDB
@@ -19,18 +19,62 @@ from trainee_app.models import TraineeDB
 from rest_framework.authtoken.models import Token
 from user_app.models import UserDB
 from user_app.api.serializer import RegistrationSerializer
-
+from rest_framework.schemas import AutoSchema
+import coreapi
+from person_app.api.views import create_person
+from coach_app.api.views import create_coach
+from trainee_app.api.views import create_trainee
 User = get_user_model()
+
+
+class LoginViewSchema(AutoSchema):
+    def get_manual_fields(self, path, method):
+        extra_fields = []
+        if method.lower() in ['post', 'put']:
+            extra_fields = [
+                coreapi.Field('username'),
+                coreapi.Field('password')
+            ]
+        manual_fields = super().get_manual_fields(path, method)
+        return manual_fields + extra_fields
+
+
+class RegistrationViewSchema(AutoSchema):
+    def get_manual_fields(self, path, method):
+        extra_fields = []
+        if method.lower() in ['post', 'put']:
+            extra_fields = [
+                coreapi.Field('email'),
+                coreapi.Field('password'),
+                coreapi.Field('password2')
+            ]
+        manual_fields = super().get_manual_fields(path, method)
+        return manual_fields + extra_fields
+
+
+# class CreateFullUserViewSchema(AutoSchema):
+#     def get_manual_fields(self, path, method):
+#         extra_fields = []
+#         if method.lower() in ['post', 'put']:
+#             extra_fields = [
+#                 coreapi.Field({'person':2})
+#             ]
+#         manual_fields = super().get_manual_fields(path, method)
+#         return manual_fields + extra_fields
 
 
 @api_view(['POST', ])
 def logout_view(request):
+    """
+    **** importent **** add header like this: {"Authorization": Token "userToken"}
+    """
     if request.method == 'POST':
         request.user.auth_token.delete()
         return Response({'success': 'logout successfully'}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST', ])
+@schema(LoginViewSchema())
 def login_view(request):
     if request.method == 'POST':
         data = {}
@@ -79,6 +123,7 @@ def login_view(request):
 
 
 @api_view(['POST', ])
+@schema(RegistrationViewSchema())
 def registration_view(request):
     if request.method == 'POST':
         serializer = RegistrationSerializer(data=request.data)
@@ -108,20 +153,22 @@ def registration_view(request):
         return Response(data)
 
 
-#
+#test
 @api_view(['POST', ])
+# @schema(CreateFullUserViewSchema())
 def full_user_create(request):
     data = {}
     BASEURL = 'http://' + get_current_site(request).domain + '/'
     # create person
     person_obj = request.data['person']
     person_obj.update({'user': request.data['person']['user']})
-    headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-    response = requests.post(BASEURL + 'person/person_list/', data=json.dumps(person_obj), headers=headers)
+    # headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+    # response = requests.post(BASEURL + 'person/person_list/', data=json.dumps(person_obj), headers=headers)
+    response = create_person(person_obj)
     if response.status_code == status.HTTP_200_OK:
-        person = json.loads(response.content)
+        person = response.data
     else:
-        return JsonResponse(json.loads(response.content))
+        return response
 
     # check if is coach
     if request.data['person']['is_coach']:
@@ -130,11 +177,12 @@ def full_user_create(request):
         coach_obj = {}
         # coach_obj = request.data['coach']
         coach_obj.update({'person': person["id"]})
-        response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
+        response = create_coach(coach_obj)
+        # response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
         if response.status_code == status.HTTP_200_OK:
-            data['coach'] = json.loads(response.content)
+            data['coach'] = response.data
         else:
-            data['error'] = json.loads(response.content)
+            data['error'] = response.data
 
     elif not request.data['person']['is_coach']:
         # create trainee
@@ -142,16 +190,66 @@ def full_user_create(request):
         # trainee_obj = request.data['trainee']
         trainee_obj = {}
         trainee_obj.update({'person': person["id"]})
-        response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
+        response = create_trainee(trainee_obj)
+        # response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
         if response.status_code == status.HTTP_200_OK:
-            data['trainee'] = json.loads(response.content)
+            data['trainee'] = response.data
         else:
-            data['error'] = json.loads(response.content)
+            data['error'] = response.data
     # if there is some error while create trainee or coach delete person
     if "error" in data.keys():
         PersonDB.objects.filter(id=person["id"]).delete()
 
     return JsonResponse(data, safe=False)
+
+
+
+
+# work
+# @api_view(['POST', ])
+# # @schema(CreateFullUserViewSchema())
+# def full_user_create(request):
+#     data = {}
+#     BASEURL = 'http://' + get_current_site(request).domain + '/'
+#     # create person
+#     person_obj = request.data['person']
+#     person_obj.update({'user': request.data['person']['user']})
+#     headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+#     response = requests.post(BASEURL + 'person/person_list/', data=json.dumps(person_obj), headers=headers)
+#     if response.status_code == status.HTTP_200_OK:
+#         person = json.loads(response.content)
+#     else:
+#         return JsonResponse(json.loads(response.content))
+#
+#     # check if is coach
+#     if request.data['person']['is_coach']:
+#         # create coach
+#         data["coach"] = {}
+#         coach_obj = {}
+#         # coach_obj = request.data['coach']
+#         coach_obj.update({'person': person["id"]})
+#         response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
+#         if response.status_code == status.HTTP_200_OK:
+#             data['coach'] = json.loads(response.content)
+#         else:
+#             data['error'] = json.loads(response.content)
+#
+#     elif not request.data['person']['is_coach']:
+#         # create trainee
+#         data["trainee"] = {}
+#         # trainee_obj = request.data['trainee']
+#         trainee_obj = {}
+#         trainee_obj.update({'person': person["id"]})
+#         response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
+#         if response.status_code == status.HTTP_200_OK:
+#             data['trainee'] = json.loads(response.content)
+#         else:
+#             data['error'] = json.loads(response.content)
+#     # if there is some error while create trainee or coach delete person
+#     if "error" in data.keys():
+#         PersonDB.objects.filter(id=person["id"]).delete()
+#
+#     return JsonResponse(data, safe=False)
 
 
 def isValidateUserRegister(password, password2, email):
@@ -218,7 +316,6 @@ class ChangePasswordView(generics.UpdateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 # from django.shortcuts import render, HttpResponse
 # from django.core.mail import send_mail as sm
 #
@@ -250,12 +347,12 @@ class ChangePasswordView(generics.UpdateAPIView):
 #             Source="abhishek@learnaws.org",
 #         )
 
-        # res = sm(
-        #     subject='Subject here',
-        #     message='Here is thedjango message.',
-        #     from_email='bfit.company1@gmail.com',
-        #     recipient_list=['liadhazoot5@gmail.com'],
-        #     fail_silently=False,
-        # )
-        #
-        # return HttpResponse(f"Email sent to {res} members")
+# res = sm(
+#     subject='Subject here',
+#     message='Here is thedjango message.',
+#     from_email='bfit.company1@gmail.com',
+#     recipient_list=['liadhazoot5@gmail.com'],
+#     fail_silently=False,
+# )
+#
+# return HttpResponse(f"Email sent to {res} members")
