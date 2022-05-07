@@ -157,48 +157,56 @@ def registration_view(request):
 @api_view(['POST', ])
 # @schema(CreateFullUserViewSchema())
 def full_user_create(request):
-    data = {}
-    BASEURL = 'http://' + get_current_site(request).domain + '/'
-    # create person
-    person_obj = request.data['person']
-    person_obj.update({'user': request.data['person']['user']})
-    # headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-    # response = requests.post(BASEURL + 'person/person_list/', data=json.dumps(person_obj), headers=headers)
-    response = create_person(person_obj)
-    if response.status_code == status.HTTP_200_OK:
-        person = response.data
-    else:
-        return response
+    if request.method == 'POST':
 
-    # check if is coach
-    if request.data['person']['is_coach']:
-        # create coach
-        data["coach"] = {}
-        coach_obj = {}
-        # coach_obj = request.data['coach']
-        coach_obj.update({'person': person["id"]})
-        response = create_coach(coach_obj)
-        # response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
+        data = {}
+        BASEURL = 'http://' + get_current_site(request).domain + '/'
+        # create person
+        person_obj = request.data['person']
+        person_obj.update({'user': request.data['person']['user']})
+        # headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        # response = requests.post(BASEURL + 'person/person_list/', data=json.dumps(person_obj), headers=headers)
+        response = create_person(person_obj)
         if response.status_code == status.HTTP_200_OK:
-            data['coach'] = response.data
+            person = response.data
         else:
-            data['error'] = response.data
+            return response
 
-    elif not request.data['person']['is_coach']:
-        # create trainee
-        data["trainee"] = {}
-        # trainee_obj = request.data['trainee']
-        trainee_obj = {}
-        trainee_obj.update({'person': person["id"]})
-        response = create_trainee(trainee_obj)
-        # response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
-        if response.status_code == status.HTTP_200_OK:
-            data['trainee'] = response.data
-        else:
-            data['error'] = response.data
-    # if there is some error while create trainee or coach delete person
-    if "error" in data.keys():
-        PersonDB.objects.filter(id=person["id"]).delete()
+        # check if is coach
+        if request.data['person']['is_coach']:
+            # create coach
+            data["coach"] = {}
+            coach_obj = {}
+
+            # coach_obj = request.data['coach']
+            if "coach" in request.data:
+                coach_obj = request.data["coach"]
+                coach_obj.update({'person': person["id"]})
+            response = create_coach(coach_obj)
+            # response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
+            if response.status_code == status.HTTP_200_OK:
+                data['coach'] = response.data
+            else:
+                data['error'] = response.data
+
+        elif not request.data['person']['is_coach']:
+            # create trainee
+            data["trainee"] = {}
+            # trainee_obj = request.data['trainee']
+            trainee_obj = {}
+            if "trainee" in request.data:
+                trainee_obj = request.data["trainee"]
+                trainee_obj.update({'person': person["id"]})
+            # trainee_obj.update({'person': person["id"]})
+            response = create_trainee(trainee_obj)
+            # response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
+            if response.status_code == status.HTTP_200_OK:
+                data['trainee'] = response.data
+            else:
+                data['error'] = response.data
+        # if there is some error while create trainee or coach delete person
+        if "error" in data.keys():
+            PersonDB.objects.filter(id=person["id"]).delete()
 
     return JsonResponse(data, safe=False)
 

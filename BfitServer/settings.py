@@ -33,6 +33,7 @@ AWS_SES_REGION_ENDPOINT = 'email.eu-central-1.amazonaws.com'
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+# CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
@@ -61,8 +62,9 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -119,28 +121,28 @@ SWAGGER_SETTINGS = {
 #     }
 # }
 #
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQL_DATABASE'),
-        'HOST': os.getenv('MYSQL_DATABASE_HOST'),
-        'PORT': os.getenv('MYSQL_DATABASE_PORT'),
-        'USER': os.getenv('MYSQL_USER'),
-        'PASSWORD': os.getenv('MYSQL_ROOT_PASSWORD'),
-    }
-}
-
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': os.environ.get('MYSQL_DATABASE', 'mysql-db'),
-#         'USER': os.environ.get('MYSQL_USER', 'mysql-user'),
-#         'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'mysql-password'),
-#         'HOST': os.environ.get('MYSQL_DATABASE_HOST', 'db'),
-#         'PORT': os.environ.get('MYSQL_DATABASE_PORT', 3306),
+#         'NAME': os.getenv('MYSQL_DATABASE'),
+#         'HOST': os.getenv('MYSQL_DATABASE_HOST'),
+#         'PORT': os.getenv('MYSQL_DATABASE_PORT'),
+#         'USER': os.getenv('MYSQL_USER'),
+#         'PASSWORD': os.getenv('MYSQL_ROOT_PASSWORD'),
 #     }
 # }
-#
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'BFIT',
+        'USER': 'root',
+        'PASSWORD': '123Qwe123=',
+        'HOST': '127.0.0.1',
+        'PORT': 3306,
+    }
+}
+
 
 
 
