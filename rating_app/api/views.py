@@ -26,28 +26,28 @@ class RatingViewSchema(AutoSchema):
         return manual_fields + extra_fields
 
 
-def rating_handler(request, rating_obj=None, preview_rating=None):
-    serializer = GeneralRatingSerializer(rating_obj, data=request.data)
+def rating_handler(data, rating_obj=None, preview_rating=None, method=None):
+    serializer = GeneralRatingSerializer(rating_obj, data=data)
 
     if serializer.is_valid():
         change_coach_rating_serializer, response = ChangeCoachRating().change_coach_rating(
-            coach_id=request.data["rating_coach_id"],
-            user_rating=request.data["rating"],
-            request_method=request.method,
+            coach_id=data["rating_coach_id"],
+            user_rating=data["rating"],
+            request_method=method,
             preview_rating=preview_rating
         )
 
         if response.status_code == status.HTTP_200_OK:  # save, change or delete
             try:
-                if request.method == "DELETE":
+                if method == "DELETE":
                     rating_obj.delete()
                     return Response("Delete Successfully", status=status.HTTP_200_OK)
 
                 else:
-                    serializer.save(person_id=PersonDB.objects.get(pk=request.data["person_id"]),
-                                    rating_coach_id=CoachDB.objects.get(pk=request.data["rating_coach_id"]))
+                    serializer.save(person_id=PersonDB.objects.get(pk=data["person_id"]),
+                                    rating_coach_id=CoachDB.objects.get(pk=data["rating_coach_id"]))
                     change_coach_rating_serializer.save()
-                    return Response(change_coach_rating_serializer.data, status=status.HTTP_201_CREATED)
+                    return Response(change_coach_rating_serializer.data, status=status.HTTP_200_OK)
             except:
                 return Response({"error": "user can not rating the same coach more than once"},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -119,12 +119,28 @@ class RatingDetailDelete(GenericAPIView):
         rating_obj.delete()
         return Response("Delete Successfully", status=status.HTTP_200_OK)
 
+
 class RatingDetailUpdate(GenericAPIView):
     serializer_class = RatingSerializer
 
-    def put(self, request):
-        rating_obj = get_object_or_404(RatingDB,
-                                       person_id=request.data["person_id"],
-                                       rating_coach_id=request.data["rating_coach_id"])
+    def post(self, request):
+        """
+        check if rating already exists
+        yes -> update rating
+        no -> create rating
+        """
+        rating_obj = RatingDB.objects.filter(person_id=request.data["person_id"],
+                                             rating_coach_id=request.data["rating_coach_id"])
+        if rating_obj.exists():
+            rating_obj = rating_obj.first()
+            return rating_handler(request.data, rating_obj, rating_obj.rating, method="PUT")
 
-        return rating_handler(request, rating_obj, rating_obj.rating)
+        else:
+            return rating_handler(request.data, method="POST")
+
+            # rating_handler(request.data, rating_obj, rating_obj.rating,method="PUT")
+        # rating_obj = get_object_or_404(RatingDB,
+        #                                person_id=request.data["person_id"],
+        #                                rating_coach_id=request.data["rating_coach_id"])
+
+        # return rating_handler(request, rating_obj, rating_obj.rating)
