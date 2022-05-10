@@ -171,7 +171,7 @@ def user_registration_validate(data):
     res = re.search(match_re, password)
 
     if not res:
-        return Response({'error': "The password must contain Capital letter, Number and minimum 8 characters."},
+        return Response({'error': "The password must contain Capital letter, Number, Symbol and minimum 8 characters."},
                         status=status.HTTP_400_BAD_REQUEST)
 
     return Response({"msg": "Validation successfully complete"}, status=status.HTTP_200_OK)
