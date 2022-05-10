@@ -159,6 +159,11 @@ def user_registration_validate(data):
     password = data['password']
     password2 = data['password2']
 
+    if data['email'] == '' or \
+            data['password'] == '' or \
+            data['password2'] == '':
+        return Response({'error':'Some fields are blank !'},status=status.HTTP_400_BAD_REQUEST)
+
     if password != password2:
         return Response({'error': 'passwords invalid'}, status=status.HTTP_400_BAD_REQUEST)
 
