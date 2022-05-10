@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-
+import re
 from user_app.models import UserDB
 
 User = get_user_model()
@@ -33,6 +33,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
         account = User(
             email=self.validated_data['email'],
         )
+
+        # # @#$%^&+=
+        # if not re.fullmatch(r'[A-Za-z0-9]{8,}', password):
+        #     raise serializers.ValidationError({'error': "The password must contain Capital letter, Number and minimum 8 characters."})
+
         account.set_password(password)
         account.save()
         return account

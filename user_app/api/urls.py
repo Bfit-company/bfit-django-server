@@ -7,6 +7,7 @@ from user_app.api.views import (
     logout_view,
     full_user_create,
     ChangePasswordView,
+    register_validation
     # send_mail,
 )
 # from user_app.api.views import login_view
@@ -14,6 +15,7 @@ from user_app.api.views import (
 urlpatterns = [
     path('login/', login_view, name='login'),
     path('register/', registration_view, name='register'),
+    path('register-validate/', register_validation, name='register_validation'),
     path('full_user_create/', full_user_create, name='full_user_create'),
     path('logout/', logout_view, name='logout'),
     path('update-user/<int:pk>/', UpdateUser.as_view(), name='update-user'),

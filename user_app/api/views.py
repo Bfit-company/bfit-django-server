@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, schema
+import re
 import requests
 from rest_framework.utils import json
 from django.db.models import Q, F, Value as V
@@ -24,6 +25,7 @@ import coreapi
 from person_app.api.views import create_person
 from coach_app.api.views import create_coach
 from trainee_app.api.views import create_trainee
+
 User = get_user_model()
 
 
@@ -145,7 +147,7 @@ def registration_view(request):
             elif serializer.data['email'] == '' or \
                     serializer.data['password'] == '' or \
                     serializer.data['password2'] == '':
-                data['error'] = 'Some field is blank !'
+                data['error'] = 'Some fields are blank !'
             else:
                 data['error'] = 'invalid field'
             return Response(data)
@@ -153,64 +155,111 @@ def registration_view(request):
         return Response(data)
 
 
-#test
+def user_registration_validate(data):
+    password = data['password']
+    password2 = data['password2']
+
+    if password != password2:
+        return Response({'error': 'passwords invalid'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if User.objects.filter(email=data['email']).exists():
+        return Response({'error': 'Email already exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # @#$%^&+=
+    reg = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,18}$"
+    match_re = re.compile(reg)
+    res = re.search(match_re, password)
+
+    if not res:
+        return Response({'error': "The password must contain Capital letter, Number and minimum 8 characters."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({"msg": "Validation successfully complete"}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST', ])
+def register_validation(request):
+    if request.method == 'POST':
+        return user_registration_validate(request.data)
+
+def register(user_data):
+    response = user_registration_validate(user_data)
+    if not response.status_code == status.HTTP_200_OK:
+        return response
+
+    serializer = RegistrationSerializer(data=user_data)
+    data = {}
+
+    if serializer.is_valid():
+        account = serializer.save()
+        data['id'] = account.id
+        data['email'] = account.email
+        token = Token.objects.get(user=account).key
+        data['token'] = token
+        data['response'] = 'Registration Successful'
+    else:
+        return Response({"error": 'invalid field'}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(data)
+
+
 @api_view(['POST', ])
 # @schema(CreateFullUserViewSchema())
 def full_user_create(request):
     if request.method == 'POST':
-
-        data = {}
-        BASEURL = 'http://' + get_current_site(request).domain + '/'
-        # create person
-        person_obj = request.data['person']
-        person_obj.update({'user': request.data['person']['user']})
-        # headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-        # response = requests.post(BASEURL + 'person/person_list/', data=json.dumps(person_obj), headers=headers)
-        response = create_person(person_obj)
+        response = register(request.data["user"])
         if response.status_code == status.HTTP_200_OK:
-            person = response.data
+            data = {}
+            BASEURL = 'http://' + get_current_site(request).domain + '/'
+            # create person
+            person_obj = request.data['person']
+            person_obj.update({'user': response.data["id"]})
+            # headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+            # response = requests.post(BASEURL + 'person/person_list/', data=json.dumps(person_obj), headers=headers)
+            response = create_person(person_obj)
+            if response.status_code == status.HTTP_200_OK:
+                person = response.data
+            else:
+                return response
+
+            # check if is coach
+            if request.data['person']['is_coach']:
+                # create coach
+                data["coach"] = {}
+                coach_obj = {}
+
+                # coach_obj = request.data['coach']
+                if "coach" in request.data:
+                    coach_obj = request.data["coach"]
+                    coach_obj.update({'person': person["id"]})
+                response = create_coach(coach_obj)
+                # response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
+                if response.status_code == status.HTTP_200_OK:
+                    data['coach'] = response.data
+                else:
+                    data['error'] = response.data
+
+            elif not request.data['person']['is_coach']:
+                # create trainee
+                data["trainee"] = {}
+                # trainee_obj = request.data['trainee']
+                trainee_obj = {}
+                if "trainee" in request.data:
+                    trainee_obj = request.data["trainee"]
+                    trainee_obj.update({'person': person["id"]})
+                # trainee_obj.update({'person': person["id"]})
+                response = create_trainee(trainee_obj)
+                # response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
+                if response.status_code == status.HTTP_200_OK:
+                    data['trainee'] = response.data
+                else:
+                    data['error'] = response.data
+            # if there is some error while create trainee or coach delete person
+            if "error" in data.keys():
+                PersonDB.objects.filter(id=person["id"]).delete()
+
+            return JsonResponse(data, safe=False)
         else:
-            return response
-
-        # check if is coach
-        if request.data['person']['is_coach']:
-            # create coach
-            data["coach"] = {}
-            coach_obj = {}
-
-            # coach_obj = request.data['coach']
-            if "coach" in request.data:
-                coach_obj = request.data["coach"]
-                coach_obj.update({'person': person["id"]})
-            response = create_coach(coach_obj)
-            # response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
-            if response.status_code == status.HTTP_200_OK:
-                data['coach'] = response.data
-            else:
-                data['error'] = response.data
-
-        elif not request.data['person']['is_coach']:
-            # create trainee
-            data["trainee"] = {}
-            # trainee_obj = request.data['trainee']
-            trainee_obj = {}
-            if "trainee" in request.data:
-                trainee_obj = request.data["trainee"]
-                trainee_obj.update({'person': person["id"]})
-            # trainee_obj.update({'person': person["id"]})
-            response = create_trainee(trainee_obj)
-            # response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
-            if response.status_code == status.HTTP_200_OK:
-                data['trainee'] = response.data
-            else:
-                data['error'] = response.data
-        # if there is some error while create trainee or coach delete person
-        if "error" in data.keys():
-            PersonDB.objects.filter(id=person["id"]).delete()
-
-    return JsonResponse(data, safe=False)
-
-
+            return Response(response.data,status=status.HTTP_400_BAD_REQUEST)
 
 
 # work
@@ -285,7 +334,7 @@ class UpdateUser(APIView):
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from user_app.api.serializer import ChangePasswordSerializer
 from rest_framework.permissions import IsAuthenticated
 

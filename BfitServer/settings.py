@@ -121,27 +121,27 @@ SWAGGER_SETTINGS = {
 #     }
 # }
 #
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': os.getenv('MYSQL_DATABASE'),
-#         'HOST': os.getenv('MYSQL_DATABASE_HOST'),
-#         'PORT': os.getenv('MYSQL_DATABASE_PORT'),
-#         'USER': os.getenv('MYSQL_USER'),
-#         'PASSWORD': os.getenv('MYSQL_ROOT_PASSWORD'),
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'BFIT',
-        'USER': 'root',
-        'PASSWORD': '123Qwe123=',
-        'HOST': '127.0.0.1',
-        'PORT': 3306,
+        'NAME': os.getenv('MYSQL_DATABASE'),
+        'HOST': os.getenv('MYSQL_DATABASE_HOST'),
+        'PORT': os.getenv('MYSQL_DATABASE_PORT'),
+        'USER': os.getenv('MYSQL_USER'),
+        'PASSWORD': os.getenv('MYSQL_ROOT_PASSWORD'),
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'BFIT',
+#         'USER': 'root',
+#         'PASSWORD': '123Qwe123=',
+#         'HOST': '127.0.0.1',
+#         'PORT': 3306,
+#     }
+# }
 
 
 
