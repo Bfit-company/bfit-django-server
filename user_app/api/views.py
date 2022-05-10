@@ -159,18 +159,26 @@ def user_registration_validate(data):
     password = data['password']
     password2 = data['password2']
 
+    # check blank fields
     if data['email'] == '' or \
             data['password'] == '' or \
             data['password2'] == '':
-        return Response({'error':'Some fields are blank !'},status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Some fields are blank'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # check email validation
+    email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    if not re.fullmatch(email_regex, data['email']):
+        return Response({'error': "Email Invalid "}, status=status.HTTP_400_BAD_REQUEST)
+
+    # check 2 passwords
     if password != password2:
-        return Response({'error': 'passwords invalid'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Passwords Invalid'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # check email exists
     if User.objects.filter(email=data['email']).exists():
         return Response({'error': 'Email already exist'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # @#$%^&+=
+    # check password validation
     reg = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,18}$"
     match_re = re.compile(reg)
     res = re.search(match_re, password)
