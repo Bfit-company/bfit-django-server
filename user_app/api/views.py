@@ -221,6 +221,7 @@ def full_user_create(request):
     if request.method == 'POST':
         response = register(request.data["user"])
         if response.status_code == status.HTTP_200_OK:
+            token = response.data["token"]
             data = {}
             BASEURL = 'http://' + get_current_site(request).domain + '/'
             # create person
@@ -269,7 +270,7 @@ def full_user_create(request):
             # if there is some error while create trainee or coach delete person
             if "error" in data.keys():
                 PersonDB.objects.filter(id=person["id"]).delete()
-
+            data.update({'token': token})
             return JsonResponse(data, safe=False)
         else:
             return Response(response.data,status=status.HTTP_400_BAD_REQUEST)
