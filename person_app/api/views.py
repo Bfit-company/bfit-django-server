@@ -44,12 +44,23 @@ class PersonList(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+def person_validate(data):
+    res = {}
+    if data["phone_number"] and phone_number_exists(data["phone_number"]):
+        res = {"error": "invalid phone number"}
+
+    if len(data["fav_sport"]) == 0:
+        res = {"error": "fav_sport cannot be empty"}
+
+    return res
+
 def create_person(data):
     serializer = PersonSerializer(data=data)
     if serializer.is_valid():
 
-        if data["phone_number"] and phone_number_exists(data["phone_number"]):
-            return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
+        validation = person_validate(data)
+        if validation.get("error"):
+            return Response(validation, status=status.HTTP_400_BAD_REQUEST)
 
         # add favorite sport to coach list
         fav_arr = []

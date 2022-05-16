@@ -233,6 +233,7 @@ def full_user_create(request):
             if response.status_code == status.HTTP_200_OK:
                 person = response.data
             else:
+                UserDB.objects.filter(id=person_obj["user"]).delete()
                 return response
 
             # check if is coach
@@ -273,7 +274,7 @@ def full_user_create(request):
             data.update({'token': token})
             return JsonResponse(data, safe=False)
         else:
-            return Response(response.data,status=status.HTTP_400_BAD_REQUEST)
+            return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
 
 
 # work
