@@ -1,3 +1,5 @@
+from email.policy import default
+
 from django.db import models
 from abc import ABC, abstractmethod
 # from person_app.models import PersonDB
@@ -14,8 +16,8 @@ from person_app.models import PersonDB
 class RatingDB(models.Model):
     person_id = models.ForeignKey(PersonDB, related_name="rating", on_delete=models.CASCADE)
     rating_coach_id = models.ForeignKey(CoachDB, related_name="rates", on_delete=models.CASCADE)
-    rating = models.IntegerField(validators=[MaxValueValidator(10), MinValueValidator(1)],
-                                 blank=False, null=False, default=3)
+    rating = models.IntegerField(validators=[MaxValueValidator(5), MinValueValidator(1)],
+                                 blank=False, null=False, default=1)
     created = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:

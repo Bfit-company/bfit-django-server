@@ -18,7 +18,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_swagger.views import get_swagger_view
-
+from Utils.aws.presign_url import PresignUrl
 schema_view = get_swagger_view(title='My Project Swagger')
 
 urlpatterns = [
@@ -31,5 +31,6 @@ urlpatterns = [
                   path('post/', include('post_app.api.urls')),
                   path('location/', include('location_app.api.urls')),
                   path('rating/', include('rating_app.api.urls')),
+                  path('presign-url/', PresignUrl.as_view()),
                   path('', schema_view),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

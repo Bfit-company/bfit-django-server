@@ -142,5 +142,4 @@ class RatingDetailUpdate(GenericAPIView):
         # rating_obj = get_object_or_404(RatingDB,
         #                                person_id=request.data["person_id"],
         #                                rating_coach_id=request.data["rating_coach_id"])
-
         # return rating_handler(request, rating_obj, rating_obj.rating)

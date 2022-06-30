@@ -11,7 +11,7 @@ class CoachDB(models.Model):
         ('FM', 'Female and Male'),
     )
     person = models.OneToOneField(PersonDB, on_delete=models.CASCADE, related_name='coach_detail')
-    rating = models.FloatField(validators=[MaxValueValidator(10.0), MinValueValidator(1.0)], blank=True, default=0)
+    rating = models.FloatField(validators=[MaxValueValidator(5.0), MinValueValidator(1.0)], blank=True, default=1)
     number_of_rating = models.IntegerField(blank=True, default=0)
     from_price = models.IntegerField(blank=True, default=0)
     to_price = models.IntegerField(blank=True, default=0)
