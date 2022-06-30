@@ -11,6 +11,7 @@ class S3:
     def __init__(self):
 
         self.s3 = boto3.resource('s3')
+        self.s3_client = boto3.client('s3')
 
     def create_presigned_post(self, bucket, key, region_name='eu-central-1'):
         '''
@@ -72,6 +73,17 @@ class S3:
         else:
             return parsed.path.lstrip('/')
 
+    def get_post_presigned_url(self,bucket,key):
+        try:
+          url = self.s3_client.generate_presigned_url(
+                        ClientMethod="put_object",
+                        Params={"Bucket":bucket, "Key":key},
+                        ExpiresIn=3600
+                    )
+        except ClientError as e:
+            print(e)
+            return None
+        return url
 
 if __name__ == "__main__":
 

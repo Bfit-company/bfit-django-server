@@ -26,38 +26,16 @@ class PresignUrl(APIView):
             ts_day=Utils.get_ts_today(),
             filename=filename
         )
-        key = f's3://bfit-data-storage/BANDANA.jpg'
-        # url = s3.create_presigned_post(BUCKET,key,region_name="us-east-2")
-        try:
-            s3_client = boto3.client('s3',)
-            url = s3_client.generate_presigned_url(
-                ClientMethod="put_object",
-                Params={"Bucket":BUCKET,"Key":key},
-                ExpiresIn=3600
-            )
-        except ClientError:
-            raise
+        url = s3.get_post_presigned_url(bucket=BUCKET,key=key)
 
-        # with open("/Users/liadhazoot/BFIT/BfitServer/Utils/aws/a1.jpeg", 'rb') as file_to_upload:
-        files = {"file": open("/Users/liadhazoot/BFIT/BfitServer/Utils/aws/a1.jpeg", 'rb')}
-        upload_response = requests.post(url,  files=files)
-        print(upload_response.status_code)
-        return Response(upload_response)
-        # return Response({
-        #     'statusCode': 201,
-        #     'headers': {
-        #         'Access-Control-Allow-Headers': 'Content-Type',
-        #         'Access-Control-Allow-Origin': '*',
-        #         'Access-Control-Allow-Methods': 'OPTIONS,GET'
-        #     },
-        #     'body': json.dumps(
-        #         {
-        #             'bucket': BUCKET,
-        #             'key': key,
-        #             'link': url
-        #         }
-        #     )
-        # },status=201)
+        return Response({"s3_path":os.path.join("s3://",BUCKET,key),"url": url}, status=200)
 
     def get(self, request):
-        return HttpResponse("hello world", status=200)
+
+        s3_path = request.query_params.get("s3_path")
+        url = s3.create_presigned_get(bucket=s3.get_bucket_name_from_s3_path(s3_path),
+                                      key=s3.get_s3_key_from_s3_path(s3_path))
+        if url:
+            return Response({"url": url}, status=200)
+        else:
+            return Response({"error": "there is a problem with getting the s3 presigned url"},status=400)
