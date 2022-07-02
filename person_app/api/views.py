@@ -111,6 +111,17 @@ def person_list(request):
         # else:
         #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+def update_person(data, pk):
+    person = get_object_or_404(PersonDB, pk=pk)
+    serializer = PersonSerializer(person, data=data,partial=True)
+    if serializer.is_valid():
+        if data.get('phone_number') and phone_number_exists(data["phone_number"], pk):
+            return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'DELETE', 'PUT'])
 def person_detail(request, pk):
@@ -120,15 +131,7 @@ def person_detail(request, pk):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        person = get_object_or_404(PersonDB, pk=pk)
-        serializer = PersonSerializer(person, data=request.data)
-        if serializer.is_valid():
-            if phone_number_exists(request.data["phone_number"], pk):
-                return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        update_person(request.data,pk)
 
     if request.method == 'DELETE':
         trainee = get_object_or_404(PersonDB, pk=pk)

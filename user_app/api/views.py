@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
+from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
 from trainee_app.api.serializer import TraineeSerializer
 from trainee_app.models import TraineeDB
@@ -22,7 +23,7 @@ from user_app.models import UserDB
 from user_app.api.serializer import RegistrationSerializer
 from rest_framework.schemas import AutoSchema
 import coreapi
-from person_app.api.views import create_person
+from person_app.api.views import create_person, update_person
 from coach_app.api.views import create_coach
 from trainee_app.api.views import create_trainee
 
@@ -195,6 +196,7 @@ def register_validation(request):
     if request.method == 'POST':
         return user_registration_validate(request.data)
 
+
 def register(user_data):
     response = user_registration_validate(user_data)
     if not response.status_code == status.HTTP_200_OK:
@@ -336,14 +338,32 @@ def isValidateUserRegister(password, password2, email):
 
 class UpdateUser(APIView):
 
-    def put(self, request, pk):
-        coach = get_object_or_404(CoachDB, pk=pk)
-        serializer = CoachSerializer(coach, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save(person=request.data["person"])
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request):
+        try:
+            data = {}
+            person_entity = PersonDB()  # does not must
+            if request.data["coach"]:
+                data = request.data["coach"]
+                person_entity = get_object_or_404(CoachDB, pk=request.data["coach"]["id"])
+                serializer = CoachSerializer(person_entity, data=data, partial=True)
+
+            elif request.data["trainee"]:
+                data = request.data["trainee"]
+                person_entity = get_object_or_404(CoachDB, pk=request.data["trainee"]["id"])
+                serializer = TraineeSerializer(person_entity, data=data, pertial=True)
+
+            if data.get("person"):
+                response = update_person(data["person"], person_entity.person_id)
+                if response.status_code != 200:
+                    return Response(response)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as ex:
+            return Response(ex, status=status.HTTP_400_BAD_REQUEST)
 
 
 from rest_framework import status
