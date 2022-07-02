@@ -3,6 +3,8 @@ from django.db.models import Value as V, Q
 from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes
+
+from person_app.api.views import update_person
 from trainee_app.api.serializer import TraineeSerializer
 from trainee_app.models import TraineeDB
 from rest_framework.response import Response
@@ -73,16 +75,28 @@ def trainee_detail(request, pk):
 
     if request.method == 'PUT':
         trainee = get_object_or_404(TraineeDB, pk=pk)
-        serializer = TraineeSerializer(trainee, data=request.data)
-        if serializer.is_valid():
-            trainee.person = get_object_or_404(PersonDB, pk=request.data["person"])
-            trainee.save()
-            trainee.fav_sport.set(request.data["fav_sport"])
+        serializer = TraineeSerializer(trainee, data=request.data, partial=True)
 
-            serializer = TraineeSerializer(trainee)
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors)
+        if request.data.get("person"):
+            response = update_person(request.data["person"], trainee.person_id)
+            if response.status_code != 200:
+                return Response(response)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        # trainee = get_object_or_404(TraineeDB, pk=pk)
+        # serializer = TraineeSerializer(trainee, data=request.data)
+        # if serializer.is_valid():
+        #     trainee.person = get_object_or_404(PersonDB, pk=request.data["person"])
+        #     trainee.save()
+        #     trainee.fav_sport.set(request.data["fav_sport"])
+        #
+        #     serializer = TraineeSerializer(trainee)
+        #     return Response(serializer.data)
+        # else:
+        #     return Response(serializer.errors)
 
     if request.method == 'DELETE':
         trainee = get_object_or_404(TraineeDB, pk=pk)

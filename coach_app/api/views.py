@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from random import shuffle
 
 from person_app.api.serializer import PersonSerializer
+from person_app.api.views import update_person
 from person_app.models import PersonDB
 from sport_type_app.models import SportTypeDB
 from user_app import models
@@ -69,17 +70,29 @@ def coach_detail(request, pk):
 
     if request.method == 'PUT':
         coach = get_object_or_404(CoachDB, pk=pk)
-        serializer = CoachSerializer(coach, data=request.data)
-        if serializer.is_valid():
-            coach.person = get_object_or_404(PersonDB, pk=request.data["person"])
-            coach.description = request.data["description"]
-            coach.rating = request.data["rating"]
-            coach.save()
+        serializer = CoachSerializer(coach, data=request.data, partial=True)
 
-            serializer = CoachSerializer(coach)
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors)
+        if request.data.get("person"):
+            response = update_person(request.data["person"], coach.person_id)
+            if response.status_code != 200:
+                return Response(response)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        # coach = get_object_or_404(CoachDB, pk=pk)
+        # serializer = CoachSerializer(coach, data=request.data)
+        # if serializer.is_valid():
+        #     coach.person = get_object_or_404(PersonDB, pk=request.data["person"])
+        #     coach.description = request.data["description"]
+        #     coach.rating = request.data["rating"]
+        #     coach.save()
+        #
+        #     serializer = CoachSerializer(coach)
+        #     return Response(serializer.data)
+        # else:
+        #     return Response(serializer.errors)
 
     if request.method == 'DELETE':
         trainee = get_object_or_404(CoachDB, pk=pk)
