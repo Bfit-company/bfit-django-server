@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'post_app',
     'location_app',
     'rating_app',
+    'job_type_app',
     'rest_framework',
     'django_rest_passwordreset',
     'rest_framework.authtoken',

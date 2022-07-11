@@ -10,6 +10,12 @@ class CoachSerializer(serializers.ModelSerializer):
     person = PersonSerializer(read_only=True)
     rates = serializers.SerializerMethodField()
 
+    def to_representation(self, instance):
+        data = super(CoachSerializer, self).to_representation(instance)
+        person = data.pop("person")
+        coach = data
+        person.update({"coach": coach})
+        return person
 
     class Meta:
         model = CoachDB

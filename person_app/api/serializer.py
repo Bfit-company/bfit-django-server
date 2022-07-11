@@ -1,6 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
 from requests import Response
 from rest_framework import serializers, status
+
+from job_type_app.api.serializer import JobTypeSerializer
 from person_app.models import PersonDB
 from datetime import date
 
@@ -19,6 +21,7 @@ class PersonRelatedField(serializers.StringRelatedField):
 
 class PersonSerializer(serializers.ModelSerializer):
     fav_sport = SportTypeSerializer(many=True, read_only=True)
+    job_type = serializers.StringRelatedField(many=True, read_only=True)
     post = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     rating_coach = serializers.SerializerMethodField()
 

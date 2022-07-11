@@ -8,12 +8,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, schema
 import re
 import requests
+from Utils.utils import Utils
 from rest_framework.utils import json
 from django.db.models import Q, F, Value as V
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
+from job_type_app.models import JobTypeDB
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
 from trainee_app.api.serializer import TraineeSerializer
@@ -96,13 +98,13 @@ def login_view(request):
             data['error'] = "invalid password"
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        user_id = user.id
         is_coach = False
+        user_id = user.id
         try:
             coach = CoachDB.objects.select_related('person').get(Q(person__user=user_id))
             if coach:  # check if the coach exists
                 serializer = CoachSerializer(coach)
-                data['coach'] = serializer.data
+                data = serializer.data
                 is_coach = True
         except ObjectDoesNotExist:
             is_coach = False
@@ -110,10 +112,10 @@ def login_view(request):
 
         if not is_coach:
             try:
-                trainee = TraineeDB.objects.select_related('person').get(Q(person__user=user_id))
-                if trainee:  # check if the trainee exists
-                    serializer = TraineeSerializer(trainee)
-                    data['trainee'] = serializer.data
+                person = PersonDB.objects.get(user=user_id)
+                if person:  # check if the trainee exists
+                    serializer = PersonSerializer(person)
+                    data = serializer.data
                     is_coach = False
             except ObjectDoesNotExist:
                 data['error'] = "the user do not finish the registration"
@@ -225,23 +227,24 @@ def full_user_create(request):
         if response.status_code == status.HTTP_200_OK:
             token = response.data["token"]
             data = {}
-            BASEURL = 'http://' + get_current_site(request).domain + '/'
+
             # create person
             person_obj = request.data['person']
             person_obj.update({'user': response.data["id"]})
-            # headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-            # response = requests.post(BASEURL + 'person/person_list/', data=json.dumps(person_obj), headers=headers)
             response = create_person(person_obj)
+
             if response.status_code == status.HTTP_200_OK:
                 person = response.data
+                data = person
             else:
                 UserDB.objects.filter(id=person_obj["user"]).delete()
                 return response
 
             # check if is coach
-            if request.data['person']['is_coach']:
+            job_type_name = Utils.get_job_type_name(job_list=request.data['person']['job_type'])
+            if "coach" in job_type_name:
                 # create coach
-                data["coach"] = {}
+                # data["coach"] = {}
                 coach_obj = {}
 
                 # coach_obj = request.data['coach']
@@ -251,28 +254,29 @@ def full_user_create(request):
                 response = create_coach(coach_obj)
                 # response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
                 if response.status_code == status.HTTP_200_OK:
-                    data['coach'] = response.data
+                    data = response.data
                 else:
                     data['error'] = response.data
 
-            elif not request.data['person']['is_coach']:
-                # create trainee
-                data["trainee"] = {}
-                # trainee_obj = request.data['trainee']
-                trainee_obj = {}
-                if "trainee" in request.data:
-                    trainee_obj = request.data["trainee"]
-                    trainee_obj.update({'person': person["id"]})
-                # trainee_obj.update({'person': person["id"]})
-                response = create_trainee(trainee_obj)
-                # response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
-                if response.status_code == status.HTTP_200_OK:
-                    data['trainee'] = response.data
-                else:
-                    data['error'] = response.data
+            # elif not request.data['person']['is_coach']:
+            #     # create trainee
+            #     data["trainee"] = {}
+            #     # trainee_obj = request.data['trainee']
+            #     trainee_obj = {}
+            #     if "trainee" in request.data:
+            #         trainee_obj = request.data["trainee"]
+            #         trainee_obj.update({'person': person["id"]})
+            #     # trainee_obj.update({'person': person["id"]})
+            #     response = create_trainee(trainee_obj)
+            #     # response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
+            #     if response.status_code == status.HTTP_200_OK:
+            #         data['trainee'] = response.data
+            #     else:
+            #         data['error'] = response.data
             # if there is some error while create trainee or coach delete person
             if "error" in data.keys():
                 PersonDB.objects.filter(id=person["id"]).delete()
+                UserDB.objects.filter(email=data["user"]['email']).delete()
             data.update({'token': token})
             return JsonResponse(data, safe=False)
         else:

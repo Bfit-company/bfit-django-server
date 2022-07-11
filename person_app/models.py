@@ -1,5 +1,7 @@
 from django.db import models
 from abc import ABC, abstractmethod
+
+from job_type_app.models import JobTypeDB
 from sport_type_app.models import SportTypeDB
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -32,6 +34,7 @@ class PersonDB(models.Model):
     youtube_url = models.URLField(null=True, blank=True)
     tiktok_url = models.URLField(null=True, blank=True)
     facebook_url = models.URLField(null=True, blank=True)
+    job_type = models.ManyToManyField(JobTypeDB)
 
     def __str__(self):
         return self.full_name

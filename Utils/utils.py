@@ -1,6 +1,9 @@
 from django.db.models import Q
 from datetime import datetime, timezone
 
+from job_type_app.models import JobTypeDB
+from django.shortcuts import get_object_or_404
+
 
 class Utils:
 
@@ -25,3 +28,11 @@ class Utils:
     def get_ts_today():
         ts_now = int(datetime.timestamp(datetime.now()))
         return Utils.get_day_ts(ts_now)
+
+    @staticmethod
+    def get_job_type_name(job_list: list):
+        job_name_list = []
+        for job in list(JobTypeDB.objects.filter(pk__in=job_list)):
+            job_name_list.append(job.name)
+
+        return job_name_list

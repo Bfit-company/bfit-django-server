@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 
 from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
+from job_type_app.models import JobTypeDB
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
 from rest_framework.response import Response
@@ -54,6 +55,33 @@ def person_validate(data):
 
     return res
 
+
+def add_fav_sport(data,serializer):
+    # add favorite sport to coach list
+    fav_arr = []
+    for fav in data["fav_sport"]:
+        fav_obj = get_object_or_404(SportTypeDB, pk=fav)
+        fav_arr.append(fav_obj)
+
+    # create person
+    person_obj = serializer.save()
+    for fav in fav_arr:
+        person_obj.fav_sport.add(fav)
+    person_obj.save()
+    return person_obj
+
+def add_job_type(person_obj,data,serializer):
+    job_arr = []
+    for fav in data["job_type"]:
+        job_obj = get_object_or_404(JobTypeDB, pk=fav)
+        job_arr.append(job_obj)
+
+    # create person
+    for fav in job_arr:
+        person_obj.job_type.add(fav)
+    person_obj.save()
+    return person_obj
+
 def create_person(data):
     serializer = PersonSerializer(data=data)
     if serializer.is_valid():
@@ -62,17 +90,8 @@ def create_person(data):
         if validation.get("error"):
             return Response(validation, status=status.HTTP_400_BAD_REQUEST)
 
-        # add favorite sport to coach list
-        fav_arr = []
-        for fav in data["fav_sport"]:
-            fav_obj = get_object_or_404(SportTypeDB, pk=fav)
-            fav_arr.append(fav_obj)
-
-        # create person
-        person_obj = serializer.save()
-        for fav in fav_arr:
-            person_obj.fav_sport.add(fav)
-        person_obj.save()
+        person_obj = add_fav_sport(data, serializer)
+        person_obj = add_job_type(person_obj,  data, serializer)
 
         serializer = PersonSerializer(person_obj)
         return Response(serializer.data)
