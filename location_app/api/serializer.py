@@ -1,20 +1,26 @@
 from rest_framework import serializers
 
 # from coach_app.api.serializer import CoachSerializer
-from coach_app.api.serializer import CoachSerializer
 from location_app.models import LocationDB, CountryDB, CityDB
+from django.db.models import Q
 
 
-def isCoachInCity(city, coach_id):
-    if LocationDB.objects.filter(city=city, coach=coach_id).exists():
-        return True
-    return False
+# def isCoachInCity(city, coach_id):
+#     if LocationDB.objects.filter(city=city, coach=coach_id).exists():
+#         return True
+#     return False
 
 
 def isLongAndLatExist(long, lat):
     if LocationDB.objects.filter(lat=lat, long=long).exists():
         return True
     return False
+
+def isAddressExist(address,city_pk):
+    if LocationDB.objects.filter(Q(city=city_pk), Q(formatted_address=address)).exists():
+        return True
+    return False
+
 
 
 def checkCountry(country):
@@ -55,7 +61,6 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class LocationSerializer(serializers.ModelSerializer):
-    coach = CoachSerializer(read_only=True)
     city = CitySerializer(read_only=True)
 
     # def validate(self, data):
@@ -73,27 +78,18 @@ class LocationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         city_data = validated_data['city']
-        country_data = city_data.country
-        country_obj = checkCountry(country_data)
-        city_data.country = country_obj
         city_obj = checkCity(city_data)
         city_pk = int(city_obj.pk)
+        lat = validated_data['lat']
+        long = validated_data['long']
+        formatted_address = validated_data['formatted_address']
 
-        if validated_data['lat'] is None and validated_data['long'] is None:
-            if isCoachInCity(city=city_obj, coach_id=validated_data['coach']):
-                raise serializers.ValidationError({"error":"this location is already exists"})
+        if LocationDB.objects.filter(city=city_pk,formatted_address=formatted_address,long=long,lat=lat).exists():
+            raise serializers.ValidationError({"error":"this location is already exists"})
         else:
-            if isLongAndLatExist(long=validated_data['long'], lat=validated_data['lat']):
-                raise serializers.ValidationError({"error":"this location is already exists"})
+            location = LocationDB.objects.create(**validated_data)
+            return location
 
-        final_location = LocationDB(coach=validated_data['coach'],
-                                    city=city_obj,
-                                    formatted_address=validated_data['formatted_address'],
-                                    lat=validated_data['lat'],
-                                    long=validated_data['long'])
-        final_location.save()
-        return final_location
-        # location_obj.save()
 
     class Meta:
         model = LocationDB

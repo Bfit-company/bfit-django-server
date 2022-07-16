@@ -24,7 +24,6 @@ class PersonDB(models.Model):
     birth_date = models.DateField()
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     phone_number = PhoneNumberField(blank=True)
-    is_coach = models.BooleanField(default=False)
     fav_sport = models.ManyToManyField(SportTypeDB)
     profile_image = models.URLField(null=True,
                                     blank=True,

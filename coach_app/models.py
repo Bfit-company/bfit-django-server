@@ -1,4 +1,7 @@
 from django.db import models
+
+from location_app.api.serializer import LocationSerializer
+from location_app.models import LocationDB
 from person_app.models import PersonDB
 from django.core.validators import MaxValueValidator, MinValueValidator
 
@@ -19,6 +22,7 @@ class CoachDB(models.Model):
     gender_coach_type = models.CharField(max_length=2, choices=GENDER_COACH_TYPE)
     description = models.CharField(max_length=255, blank=True)
     date_joined = models.DateTimeField(verbose_name='date_joined', auto_now_add=True)
+    locations = models.ManyToManyField(LocationDB)
 
 
     # todo:

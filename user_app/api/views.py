@@ -251,34 +251,19 @@ def full_user_create(request):
                 if "coach" in request.data:
                     coach_obj = request.data["coach"]
                     coach_obj.update({'person': person["id"]})
-                response = create_coach(coach_obj)
-                # response = requests.post(BASEURL + 'coach/coach_list/', data=coach_obj)
-                if response.status_code == status.HTTP_200_OK:
-                    data = response.data
+                    response = create_coach(coach_obj)
+                    if response.status_code == status.HTTP_200_OK:
+                        data = response.data
+                    else:
+                        data['error'] = "Coach does not created"
                 else:
-                    data['error'] = response.data
+                    data['error'] = "invalid data"
 
-            # elif not request.data['person']['is_coach']:
-            #     # create trainee
-            #     data["trainee"] = {}
-            #     # trainee_obj = request.data['trainee']
-            #     trainee_obj = {}
-            #     if "trainee" in request.data:
-            #         trainee_obj = request.data["trainee"]
-            #         trainee_obj.update({'person': person["id"]})
-            #     # trainee_obj.update({'person': person["id"]})
-            #     response = create_trainee(trainee_obj)
-            #     # response = requests.post(BASEURL + 'trainee/trainee_list/', data=trainee_obj)
-            #     if response.status_code == status.HTTP_200_OK:
-            #         data['trainee'] = response.data
-            #     else:
-            #         data['error'] = response.data
-            # if there is some error while create trainee or coach delete person
             if "error" in data.keys():
                 PersonDB.objects.filter(id=person["id"]).delete()
-                UserDB.objects.filter(email=data["user"]['email']).delete()
+                UserDB.objects.get(pk=data["user"]).delete()
             data.update({'token': token})
-            return JsonResponse(data, safe=False)
+            return JsonResponse(data['error'], safe=False)
         else:
             return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
 

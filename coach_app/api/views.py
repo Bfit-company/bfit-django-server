@@ -273,44 +273,44 @@ class ChangeCoachRating(APIView):
             return Response({"error": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SearchCoach(APIView):
-    def post(self, request):
-
-        name = request.data["name"]
-        rating = request.data["rating"]
-        number_of_rating = request.data["number_of_rating"]
-        start_price = request.data["start_price"]
-        end_price = request.data["end_price"]
-        fav_sports = request.data["fav_sport"]
-        city = request.data["city"]
-        is_train_at_home = request.data["is_train_at_home"]
-        limit = request.data["limit"]
-
-        name = name.strip()
-        query = Q()
-        if name != '':
-            query = query & Q(person__full_name__icontains=name)  #
-        if limit == '':
-            limit = MAX_LIMIT  # max limit
-        if fav_sports != '':  # fav_sport can be more than one
-            sport_type_list = [fav_sport for fav_sport in fav_sports]
-            query = query & Q(person__fav_sport__in=sport_type_list)
-        if rating != '':
-            query = query & Q(rating__gte=rating)
-        if city != '':  # to do
-            query = query & Q(location_coach__city__name__contains=city)
-        if number_of_rating != '':
-            query = query & Q(number_of_rating__gte=number_of_rating)
-        if is_train_at_home != '':
-            query = query & Q(is_train_at_home=is_train_at_home)
-        if start_price != '' and end_price != '':
-            query = query & Q(price__range=(start_price, end_price))
-
-        coaches = list(CoachDB.objects.select_related('person').filter(query)[:int(limit)])
-
-        shuffle(coaches)
-        serializer = CoachSerializer(coaches, many=True)
-        return Response(serializer.data)
+# class SearchCoach(APIView):
+    # def post(self, request):
+    #
+    #     name = request.data["name"]
+    #     rating = request.data["rating"]
+    #     number_of_rating = request.data["number_of_rating"]
+    #     start_price = request.data["start_price"]
+    #     end_price = request.data["end_price"]
+    #     fav_sports = request.data["fav_sport"]
+    #     city = request.data["city"]
+    #     is_train_at_home = request.data["is_train_at_home"]
+    #     limit = request.data["limit"]
+    #
+    #     name = name.strip()
+    #     query = Q()
+    #     if name != '':
+    #         query = query & Q(person__full_name__icontains=name)  #
+    #     if limit == '':
+    #         limit = MAX_LIMIT  # max limit
+    #     if fav_sports != '':  # fav_sport can be more than one
+    #         sport_type_list = [fav_sport for fav_sport in fav_sports]
+    #         query = query & Q(person__fav_sport__in=sport_type_list)
+    #     if rating != '':
+    #         query = query & Q(rating__gte=rating)
+    #     if city != '':  # to do
+    #         query = query & Q(location_coach__city__name__contains=city)
+    #     if number_of_rating != '':
+    #         query = query & Q(number_of_rating__gte=number_of_rating)
+    #     if is_train_at_home != '':
+    #         query = query & Q(is_train_at_home=is_train_at_home)
+    #     if start_price != '' and end_price != '':
+    #         query = query & Q(price__range=(start_price, end_price))
+    #
+    #     coaches = list(CoachDB.objects.select_related('person').filter(query)[:int(limit)])
+    #
+    #     shuffle(coaches)
+    #     serializer = CoachSerializer(coaches, many=True)
+    #     return Response(serializer.data)
 
 
 class SearchCoach(APIView):
@@ -356,8 +356,8 @@ class SearchCoach(APIView):
         name = request.query_params.get("name")
         rating = request.query_params.get("rating")
         number_of_rating = request.query_params.get("number_of_rating")
-        start_price = request.query_params.get("start_price")
-        end_price = request.query_params.get("end_price")
+        from_price = request.query_params.get("from_price")
+        to_price = request.query_params.get("to_price")
         fav_sports = request.query_params.get("fav_sport")
         country = request.query_params.get("country")
         city = request.query_params.get("city")
@@ -383,8 +383,11 @@ class SearchCoach(APIView):
             query = query & Q(number_of_rating__gte=number_of_rating)
         if is_train_at_home != '':
             query = query & Q(is_train_at_home=is_train_at_home)
-        if start_price != '' and end_price != '':
-            query = query & Q(price__range=(start_price, end_price))
+        if from_price != '':
+            query = query & Q(from_price__gte=from_price)
+        if to_price != '':
+            query = query & Q(to_price__gte=to_price)
+
 
         coaches = list(CoachDB.objects.select_related('person').filter(query)[:int(limit)])
 

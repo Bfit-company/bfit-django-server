@@ -1,14 +1,14 @@
 from rest_framework import serializers
 from coach_app.models import CoachDB
-from person_app.models import PersonDB
+from location_app.api.serializer import LocationSerializer
 from rating_app.api.serializer import RatesSerializer
 from person_app.api.serializer import PersonSerializer
-from django.shortcuts import get_object_or_404
 
 
 class CoachSerializer(serializers.ModelSerializer):
     person = PersonSerializer(read_only=True)
     rates = serializers.SerializerMethodField()
+    location = LocationSerializer(many=True)
 
     def to_representation(self, instance):
         data = super(CoachSerializer, self).to_representation(instance)

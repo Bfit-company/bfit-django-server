@@ -53,25 +53,14 @@ class LocationList(APIView):
         city['country'] = int(country_obj.pk)
         city_obj = checkCity(city)
 
-        # else:
-        #     return Response(city_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         location_obj = request.data
         city_pk = int(city_obj.pk)
         location_obj.update({"city": city_pk})
-        #
-        # if location_obj['lat'] is None and location_obj['long'] is None:
-        #     if isCoachInCity(city=location_obj['city'], coach_id=location_obj['coach']):
-        #         return Response("this location is already exists", status=status.HTTP_404_NOT_FOUND)
-        # else:
-        #     if isLongAndLatExist(long=location_obj['long'], lat=location_obj['lat']):
-        #         return Response("this location is already exists", status=status.HTTP_404_NOT_FOUND)
 
-        # location_obj.update({"country": city['country']})
         serializer = LocationSerializer(data=location_obj)
         if serializer.is_valid():
             try:
-                serializer.save(coach=CoachDB.objects.get(pk=request.data['coach']),
-                                city=CityDB.objects.get(pk=city_pk))
+                serializer.save(city=CityDB.objects.get(pk=city_pk))
             except ObjectDoesNotExist:
                 return Response("not found", status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
