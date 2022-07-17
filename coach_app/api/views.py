@@ -12,10 +12,14 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from random import shuffle
 
+from location_app.models import LocationDB
 from person_app.api.serializer import PersonSerializer
 from person_app.api.views import update_person
 from person_app.models import PersonDB
 
+def add_locations(locations,coach_obj):
+    for location in locations:
+        LocationDB.objects.create()
 
 def create_coach(data):
     serializer = CoachSerializer(data=data)
@@ -29,7 +33,7 @@ def create_coach(data):
         if "coach" not in person_serializer.data["job_type"]:
             return Response({"error": "the user is not coach"})
         if not person_check.exists():
-            serializer.save(person=PersonDB.objects.get(pk=person_id))
+            coach_obj = serializer.save(person=PersonDB.objects.get(pk=person_id))
             return Response(serializer.data)
         else:
             return Response({"error": "the coach already exist"})

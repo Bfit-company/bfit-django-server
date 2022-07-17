@@ -14,29 +14,30 @@ from coach_app.api.serializer import CoachSerializer
 from rest_framework.views import APIView
 
 
-def checkCountry(country):
-    country_obj = CountryDB.objects.filter(name=country['name'])
-    if not country_obj.exists():
-        country_obj = CountryDB(name=country['name'])
-        country_obj.save()
-    else:
-        country_obj = country_obj.first()
-    return country_obj
-
-
-def checkCity(city):
-    if city:
-        city_serializer = CitySerializer(data=city)
-        city_obj = CityDB.objects.filter(name=city['name'],
-                                         country=city['country'])
-        if not city_obj.exists():
-            if city_serializer.is_valid():
-                city_obj = city_serializer.save()
-                print("city saved")
-        else:
-            city_obj = city_obj.first()
-        return city_obj
-    return None
+# def checkCountry(country):
+#     country_obj = CountryDB.objects.filter(name=country['name'])
+#     if not country_obj.exists():
+#         country_obj = CountryDB(name=country['name'])
+#         country_obj.save()
+#     else:
+#         country_obj = country_obj.first()
+#     return country_obj
+#
+#
+# def checkCity(city):
+#     if city:
+#         city_serializer = CitySerializer(data=city)
+#         city_obj = CityDB.objects.filter(name=city['name'],
+#                                          country=city['country'])
+#
+#         if not city_obj.exists():
+#             if city_serializer.is_valid():
+#                 city_obj = city_serializer.save()
+#                 print("city saved")
+#         else:
+#             city_obj = city_obj.first()
+#         return city_obj
+#     return None
 
 
 class LocationList(APIView):
@@ -47,20 +48,11 @@ class LocationList(APIView):
 
     def post(self, request):
         city = request.data['city']
-        country = city['country']
-
-        country_obj = checkCountry(country)
-        city['country'] = int(country_obj.pk)
-        city_obj = checkCity(city)
-
         location_obj = request.data
-        city_pk = int(city_obj.pk)
-        location_obj.update({"city": city_pk})
-
         serializer = LocationSerializer(data=location_obj)
         if serializer.is_valid():
             try:
-                serializer.save(city=CityDB.objects.get(pk=city_pk))
+                serializer.save(city=city)
             except ObjectDoesNotExist:
                 return Response("not found", status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -100,7 +92,7 @@ class CityList(APIView):
     def post(self, request):
         serializer = CitySerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(country=request.data["country"])
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
