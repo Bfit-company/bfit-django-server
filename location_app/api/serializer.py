@@ -5,6 +5,7 @@ from location_app.models import LocationDB, CountryDB, CityDB
 from django.db.models import Q
 from django.db import IntegrityError
 
+from rest_framework.response import Response
 
 # def isCoachInCity(city, coach_id):
 #     if LocationDB.objects.filter(city=city, coach=coach_id).exists():
@@ -122,8 +123,8 @@ class LocationSerializer(serializers.ModelSerializer):
 
         location_result = LocationDB.objects.filter(city=city_pk, formatted_address=formatted_address, long=long, lat=lat)
         if location_result.exists():
-            raise serializers.ValidationError({"error": "this location is already exists",
-                                               "location_id": list(location_result)[0].pk})
+            return {"error": "this location is already exists",
+                                               "id": list(location_result)[0].pk}
         else:
             location.update({"city":city_obj})
             location = LocationDB.objects.create(**location)

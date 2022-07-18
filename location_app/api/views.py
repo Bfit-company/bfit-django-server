@@ -39,6 +39,21 @@ from rest_framework.views import APIView
 #         return city_obj
 #     return None
 
+def create_location(data):
+    city = data['city']
+    location_obj = data
+    serializer = LocationSerializer(data=location_obj)
+    if serializer.is_valid():
+        try:
+            response = serializer.save(city=city)
+        except ObjectDoesNotExist:
+            return Response("not found", status=status.HTTP_404_NOT_FOUND)
+        if response["error"]:
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LocationList(APIView):
     def get(self, request):
@@ -47,17 +62,7 @@ class LocationList(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        city = request.data['city']
-        location_obj = request.data
-        serializer = LocationSerializer(data=location_obj)
-        if serializer.is_valid():
-            try:
-                serializer.save(city=city)
-            except ObjectDoesNotExist:
-                return Response("not found", status=status.HTTP_404_NOT_FOUND)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return create_location(request.data)
 
 
 class LocationDetail(APIView):

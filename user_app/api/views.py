@@ -255,15 +255,17 @@ def full_user_create(request):
                     if response.status_code == status.HTTP_200_OK:
                         data = response.data
                     else:
-                        data['error'] = "Coach does not created"
+                        data['error'] = response.data
                 else:
                     data['error'] = "invalid data"
 
             if "error" in data.keys():
                 PersonDB.objects.filter(id=person["id"]).delete()
                 UserDB.objects.get(pk=data["user"]).delete()
-            data.update({'token': token})
-            return JsonResponse(data['error'], safe=False)
+                return JsonResponse(data["error"], safe=False)
+            else:
+                data.update({'token': token})
+                return JsonResponse(data, safe=False)
         else:
             return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
 

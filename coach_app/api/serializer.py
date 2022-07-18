@@ -8,7 +8,7 @@ from person_app.api.serializer import PersonSerializer
 class CoachSerializer(serializers.ModelSerializer):
     person = PersonSerializer(read_only=True)
     rates = serializers.SerializerMethodField()
-    location = LocationSerializer(many=True)
+    locations = LocationSerializer(many=True,read_only=True)
 
     def to_representation(self, instance):
         data = super(CoachSerializer, self).to_representation(instance)

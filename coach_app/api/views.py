@@ -1,3 +1,4 @@
+import serializers as serializers
 from django.db.models import Q, F, Value as V
 from django.db.models.functions import Concat
 from django.http import HttpResponse
@@ -12,15 +13,23 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from random import shuffle
 
+from location_app.api.serializer import LocationSerializer
+from location_app.api.views import create_location
 from location_app.models import LocationDB
 from person_app.api.serializer import PersonSerializer
 from person_app.api.views import update_person
 from person_app.models import PersonDB
 
 def add_locations(locations,coach_obj):
+    location_pk_arr = []
     for location in locations:
-        LocationDB.objects.create()
+        response = create_location(location)
+        location_pk_arr.append(response.data["id"])
 
+    for location_pk in location_pk_arr:
+        coach_obj.locations.add(location_pk)
+    coach_obj.save()
+    return coach_obj
 def create_coach(data):
     serializer = CoachSerializer(data=data)
     if serializer.is_valid():
@@ -34,7 +43,9 @@ def create_coach(data):
             return Response({"error": "the user is not coach"})
         if not person_check.exists():
             coach_obj = serializer.save(person=PersonDB.objects.get(pk=person_id))
-            return Response(serializer.data)
+            coach_obj = add_locations(data["locations"],coach_obj)
+            coach_serializer = CoachSerializer(coach_obj)
+            return Response(coach_serializer.data)
         else:
             return Response({"error": "the coach already exist"})
     else:
