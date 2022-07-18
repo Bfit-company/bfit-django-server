@@ -391,9 +391,9 @@ class SearchCoach(APIView):
         if rating != '':
             query = query & Q(rating__gte=rating)
         if country != '':
-            query = query & Q(location_coach__city__country__name__contains=country)
+            query = query & Q(locations__city__country__name__contains=country)
         if city != '':
-            query = query & Q(location_coach__city__name__contains=city)
+            query = query & Q(locations__city__name__contains=city)
         if number_of_rating != '':
             query = query & Q(number_of_rating__gte=number_of_rating)
         if is_train_at_home != '':
