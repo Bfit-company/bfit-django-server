@@ -14,6 +14,12 @@ KEY = 'users_images/user={user}/{image_type}/ts_day={ts_day}/{filename}'
 s3 = S3()
 
 class PresignUrl(APIView):
+    @staticmethod
+    def create_presigned_url(s3_path):
+        return s3.create_presigned_get(bucket=s3.get_bucket_name_from_s3_path(s3_path),
+                                    key=s3.get_s3_key_from_s3_path(s3_path))
+
+
     def post(self, request):
 
         filename = request.data.get('filename')
@@ -33,8 +39,7 @@ class PresignUrl(APIView):
     def get(self, request):
 
         s3_path = request.query_params.get("s3_path")
-        url = s3.create_presigned_get(bucket=s3.get_bucket_name_from_s3_path(s3_path),
-                                      key=s3.get_s3_key_from_s3_path(s3_path))
+        url = self.create_presigned_url(s3_path)
         if url:
             return Response({"url": url}, status=200)
         else:

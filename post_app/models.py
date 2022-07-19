@@ -10,9 +10,10 @@ class PostDB(models.Model):
     person = models.ForeignKey(PersonDB, on_delete=models.CASCADE, related_name='post')
     title = models.CharField(max_length=120)
     # slug = models.SlugField(unique=True)
-    image = models.URLField(null=True,
-                            blank=True,
-                            default="https://www.essd.eu/wp-content/uploads/2020/07/ESSD_Hungary-12.jpg")
+    image_s3_path = models.CharField(null=True,
+                                     blank=True,
+                                     max_length=200,
+                                     default="s3://bfit-data-storage/users_images/user=liad/profile/ts_day=1656547200/liad.png")
     # height_field = models.IntegerField(default=0)
     # width_field = models.IntegerField(default=0)
     # draft = models.BooleanField(default=False)
@@ -29,5 +30,3 @@ class PostDB(models.Model):
     #     if not self.slug:
     #         self.slug = slugify(self.title)
     #     return super().save(*args, **kwargs)
-
-
