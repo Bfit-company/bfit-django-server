@@ -7,6 +7,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, schema
 import re
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 import requests
 from Utils.utils import Utils
 from rest_framework.utils import json
@@ -399,43 +401,18 @@ class ChangePasswordView(generics.UpdateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# from django.shortcuts import render, HttpResponse
-# from django.core.mail import send_mail as sm
-#
-#
-# @api_view(['POST', ])
-# def send_mail(request):
-#     if request.method == 'POST':
-#         ses_client = boto3.client("ses", region_name="eu-central-1")
-#         CHARSET = "UTF-8"
-#
-#         response = ses_client.send_email(
-#             Destination={
-#                 "ToAddresses": [
-#                     "abhishek@learnaws.org",
-#                 ],
-#             },
-#             Message={
-#                 "Body": {
-#                     "Text": {
-#                         "Charset": CHARSET,
-#                         "Data": "Hello, world!",
-#                     }
-#                 },
-#                 "Subject": {
-#                     "Charset": CHARSET,
-#                     "Data": "Amazing Email Tutorial",
-#                 },
-#             },
-#             Source="abhishek@learnaws.org",
-#         )
 
-# res = sm(
-#     subject='Subject here',
-#     message='Here is thedjango message.',
-#     from_email='bfit.company1@gmail.com',
-#     recipient_list=['liadhazoot5@gmail.com'],
-#     fail_silently=False,
-# )
-#
-# return HttpResponse(f"Email sent to {res} members")
+class UserDetails(APIView):
+    # authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, pk):
+        person = get_object_or_404(PersonDB, user=pk)  # get the person from the user_id
+        person_serializer = PersonSerializer(person)
+        if "coach" in person_serializer.data["job_type"]:
+            coach = get_object_or_404(CoachDB, person=person.pk)  # get the coach from the person id
+            coach_serializer = CoachSerializer(coach)
+            return Response(coach_serializer.data)
+
+        else:  # the user is trainee (person)
+            return Response(person_serializer.data)

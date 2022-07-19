@@ -7,7 +7,8 @@ from user_app.api.views import (
     logout_view,
     full_user_create,
     ChangePasswordView,
-    register_validation
+    register_validation,
+    UserDetails
     # send_mail,
 )
 # from user_app.api.views import login_view
@@ -20,6 +21,7 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('update-user/', UpdateUser.as_view(), name='update-user'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('user-details/<int:pk>', UserDetails.as_view(), name='user-details'),
     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     # path('api/password_reset/', send_mail, name='password_reset'),
 
