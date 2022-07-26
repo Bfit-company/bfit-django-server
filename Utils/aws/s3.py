@@ -1,3 +1,4 @@
+import io
 from urllib.parse import urlparse
 
 import boto3
@@ -53,6 +54,9 @@ class S3:
 
     def upload_file(self, bucket, s3path, path):
         self.s3.Bucket(bucket).upload_file(path, s3path)
+
+    def upload_file_obj(self, bucket, s3_key, file):
+        self.s3_client.upload_fileobj(file.file, bucket, s3_key)
 
     def copy_file_to_new_bucket(self, source_bucket, source_key, target_bucket, target_key):
         source = {

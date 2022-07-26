@@ -3,8 +3,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 
+from Utils.aws.s3 import S3
+from Utils.utils import Utils
 from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
+from config import BUCKET,S3_KEY
 from job_type_app.models import JobTypeDB
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
@@ -14,6 +17,8 @@ from sport_type_app.models import SportTypeDB
 from trainee_app.models import TraineeDB
 from rest_framework.views import APIView
 
+from user_app.models import UserDB
+
 
 class PersonList(APIView):
     def get(self,request):
@@ -22,28 +27,7 @@ class PersonList(APIView):
         return Response(serializer.data)
 
     def post(self,request):
-        serializer = PersonSerializer(data=request.data)
-        if serializer.is_valid():
-
-            if request.data["phone_number"] and phone_number_exists(request.data["phone_number"]):
-                return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
-
-            # add favorite sport to coach list
-            fav_arr = []
-            for fav in request.data["fav_sport"]:
-                fav_obj = get_object_or_404(SportTypeDB, pk=fav)
-                fav_arr.append(fav_obj)
-
-            # create person
-            person_obj = serializer.save()
-            for fav in fav_arr:
-                person_obj.fav_sport.add(fav)
-            person_obj.save()
-
-            serializer = PersonSerializer(person_obj)
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        create_person(request.data)
 
 def person_validate(data):
     res = {}
@@ -141,7 +125,6 @@ def update_person(data, pk):
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 @api_view(['GET', 'DELETE', 'PUT'])
 def person_detail(request, pk):
     if request.method == 'GET':
@@ -186,3 +169,28 @@ def phone_number_exists(phone_number, person_id=None):
         if person_id and cur_person.id == person_id:
             response = False
     return response
+
+
+class UploadProfileImage(APIView):
+
+    def post(self, request, pk):
+        person = PersonDB.objects.select_related('user').get(id=pk)
+        image_type = request.data.get('image_type')
+        file = request.data.get('file')
+
+        s3 = S3()
+        s3_key = S3_KEY.format(
+            user=person.user.email,
+            image_type=image_type,
+            ts_day=Utils.get_ts_today(),
+            filename=file.name
+        )
+        s3.upload_file_obj(file=file, bucket=BUCKET, s3_key=s3_key)
+
+        payload = {"profile_image_s3_path": f's3://{BUCKET}/{s3_key}'}
+        person = get_object_or_404(PersonDB, pk=pk)
+        serializer = PersonSerializer(person, data=payload, partial=True)  # set partial=True to update a data partially
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_200_OK, data=serializer.data)
+        return Response(status=status.HTTP_400_BAD_REQUEST, data="wrong parameters")

@@ -9,8 +9,8 @@ from Utils.utils import Utils
 from rest_framework.views import APIView
 from django.http import HttpResponse
 from Utils.aws.s3 import S3
-BUCKET = os.getenv('BUCKET', 'bfit-data-storage')
-KEY = 'users_images/user={user}/{image_type}/ts_day={ts_day}/{filename}'
+from config import S3_KEY, BUCKET
+
 s3 = S3()
 
 class PresignUrl(APIView):
@@ -26,7 +26,7 @@ class PresignUrl(APIView):
         user = request.data.get('user')
         image_type = request.data.get('image_type')
 
-        key = KEY.format(
+        key = S3_KEY.format(
             user=user,
             image_type=image_type,
             ts_day=Utils.get_ts_today(),

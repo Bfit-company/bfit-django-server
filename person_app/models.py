@@ -25,9 +25,9 @@ class PersonDB(models.Model):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     phone_number = PhoneNumberField(blank=True)
     fav_sport = models.ManyToManyField(SportTypeDB)
-    profile_image = models.URLField(null=True,
-                                    blank=True,
-                                    default="https://www.essd.eu/wp-content/uploads/2020/07/ESSD_Hungary-12.jpg")
+    profile_image_s3_path = models.CharField(null=True,
+                                             max_length=200,
+                                             blank=True)
     business_email = models.EmailField(null=True, blank=False)
     instagram_url = models.URLField(null=True, blank=True)
     youtube_url = models.URLField(null=True, blank=True)
