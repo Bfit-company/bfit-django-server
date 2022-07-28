@@ -1,8 +1,7 @@
 from django.db.models import Q
 from datetime import datetime, timezone
-
 from job_type_app.models import JobTypeDB
-from django.shortcuts import get_object_or_404
+
 
 
 class Utils:
@@ -36,3 +35,5 @@ class Utils:
             job_name_list.append(job.name)
 
         return job_name_list
+
+

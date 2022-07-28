@@ -177,13 +177,12 @@ class UploadProfileImage(APIView):
 
     def post(self, request, pk):
         person = PersonDB.objects.select_related('user').get(id=pk)
-        image_type = request.data.get('image_type')
         file = request.data.get('file')
 
         s3 = S3()
         s3_key = S3_KEY.format(
             user=person.user.email,
-            image_type=image_type,
+            image_type="profile_image",
             ts_day=Utils.get_ts_today(),
             filename=file.name
         )
