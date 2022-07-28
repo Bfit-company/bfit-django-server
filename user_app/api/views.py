@@ -298,11 +298,11 @@ def full_user_create(request):
                         profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
                                                                          email=request_data.get("user").get("email"),
                                                                          person_id=person["id"])
-                        data.update({'profile_image_s3_path': profile_img_presign_url})
+                        data.update({'profile_image_url': profile_img_presign_url})
                         data.update({'token': token})
                         return JsonResponse(data, safe=False)
                     except Exception as ex:
-                        return Response({"error": "could not success to save profile image"})
+                        return Response({"error": "could not success to save profile image"}, status=status.HTTP_400_BAD_REQUEST)
 
         else:
             return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
