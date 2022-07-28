@@ -44,7 +44,7 @@ def add_fav_sport(data,serializer):
     # add favorite sport to coach list
     fav_arr = []
     for fav in data["fav_sport"]:
-        fav_obj = get_object_or_404(SportTypeDB, pk=fav)
+        fav_obj = SportTypeDB.objects.get(pk=fav)
         fav_arr.append(fav_obj)
 
     # create person
@@ -57,7 +57,7 @@ def add_fav_sport(data,serializer):
 def add_job_type(person_obj,data,serializer):
     job_arr = []
     for fav in data["job_type"]:
-        job_obj = get_object_or_404(JobTypeDB, pk=fav)
+        job_obj = JobTypeDB.objects.get(pk=fav)
         job_arr.append(job_obj)
 
     # create person
@@ -73,9 +73,11 @@ def create_person(data):
         validation = person_validate(data)
         if validation.get("error"):
             return Response(validation, status=status.HTTP_400_BAD_REQUEST)
-
-        person_obj = add_fav_sport(data, serializer)
-        person_obj = add_job_type(person_obj,  data, serializer)
+        try:
+            person_obj = add_fav_sport(data, serializer)
+            person_obj = add_job_type(person_obj,  data, serializer)
+        except Exception as ex:
+            return Response({"error": "invalid data"},status=status.HTTP_400_BAD_REQUEST)
 
         serializer = PersonSerializer(person_obj)
         return Response(serializer.data)

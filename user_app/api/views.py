@@ -273,10 +273,6 @@ def full_user_create(request):
             job_type_name = Utils.get_job_type_name(job_list=request_data['person']['job_type'])
             if "coach" in job_type_name:
                 # create coach
-                # data["coach"] = {}
-                coach_obj = {}
-
-                # coach_obj = request.data['coach']
                 if "coach" in request_data:
                     coach_obj = request_data["coach"]
                     coach_obj.update({'person': person["id"]})
