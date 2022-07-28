@@ -10,6 +10,9 @@ import re
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 import requests
+
+from Utils.aws.presign_url import PresignUrl
+from Utils.aws.s3 import S3
 from Utils.utils import Utils
 from rest_framework.utils import json
 from django.db.models import Q, F, Value as V
@@ -17,6 +20,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
+from config import S3_KEY, BUCKET
 from job_type_app.models import JobTypeDB
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
@@ -221,17 +225,40 @@ def register(user_data):
     return Response(data)
 
 
+def save_profile_img_to_s3(file, email, person_id):
+    try:
+        s3 = S3()
+        s3_key = S3_KEY.format(
+            user=email,
+            image_type="profile_image",
+            ts_day=Utils.get_ts_today(),
+            filename=file.name
+        )
+        s3.upload_file_obj(file=file, bucket=BUCKET, s3_key=s3_key)
+        s3_path = f's3://{BUCKET}/{s3_key}'
+        PersonDB.objects.filter(pk=person_id).update(profile_image_s3_path=s3_path)
+        return PresignUrl().create_presigned_url(s3_path)
+    except Exception as ex:
+        raise ex
+
+
 @api_view(['POST', ])
 # @schema(CreateFullUserViewSchema())
 def full_user_create(request):
+    '''
+        create full user with all the parameters
+        UI send form data because image file
+    '''
     if request.method == 'POST':
-        response = register(request.data["user"])
+        request_data = request.data["user_data"]
+        request_data = json.loads(request_data)  # str to dict
+        profile_img = request.data.get("file")
+        response = register(request_data["user"])
         if response.status_code == status.HTTP_200_OK:
             token = response.data["token"]
-            data = {}
 
             # create person
-            person_obj = request.data['person']
+            person_obj = request_data['person']
             person_obj.update({'user': response.data["id"]})
             response = create_person(person_obj)
 
@@ -243,15 +270,15 @@ def full_user_create(request):
                 return response
 
             # check if is coach
-            job_type_name = Utils.get_job_type_name(job_list=request.data['person']['job_type'])
+            job_type_name = Utils.get_job_type_name(job_list=request_data['person']['job_type'])
             if "coach" in job_type_name:
                 # create coach
                 # data["coach"] = {}
                 coach_obj = {}
 
                 # coach_obj = request.data['coach']
-                if "coach" in request.data:
-                    coach_obj = request.data["coach"]
+                if "coach" in request_data:
+                    coach_obj = request_data["coach"]
                     coach_obj.update({'person': person["id"]})
                     response = create_coach(coach_obj)
                     if response.status_code == status.HTTP_200_OK:
@@ -265,9 +292,18 @@ def full_user_create(request):
                 PersonDB.objects.filter(id=person["id"]).delete()
                 UserDB.objects.get(pk=data["user"]).delete()
                 return JsonResponse(data["error"], safe=False)
-            else:
-                data.update({'token': token})
-                return JsonResponse(data, safe=False)
+            else:  # the user created successfully
+                if profile_img:  # save profile image if exists
+                    try:
+                        profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
+                                                                         email=request_data.get("user").get("email"),
+                                                                         person_id=person["id"])
+                        data.update({'profile_image_s3_path': profile_img_presign_url})
+                        data.update({'token': token})
+                        return JsonResponse(data, safe=False)
+                    except Exception as ex:
+                        return Response({"error": "could not success to save profile image"})
+
         else:
             return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
 
