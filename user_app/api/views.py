@@ -256,52 +256,49 @@ def full_user_create(request):
         response = register(request_data["user"])
         if response.status_code == status.HTTP_200_OK:
             token = response.data["token"]
-            try:
-                # create person
-                person_obj = request_data['person']
-                person_obj.update({'user': response.data["id"]})
-                response = create_person(person_obj)
+            # create person
+            person_obj = request_data['person']
+            person_obj.update({'user': response.data["id"]})
+            response = create_person(person_obj)
 
-                if response.status_code == status.HTTP_200_OK:
-                    person = response.data
-                    data = person
-                else:
-                    UserDB.objects.filter(id=person_obj["user"]).delete()
-                    return response
+            if response.status_code == status.HTTP_200_OK:
+                person = response.data
+                data = person
+            else:
+                UserDB.objects.filter(id=person_obj["user"]).delete()
+                return response
 
-                # check if is coach
-                job_type_name = Utils.get_job_type_name(job_list=request_data['person']['job_type'])
-                if "coach" in job_type_name:
-                    # create coach
-                    if "coach" in request_data:
-                        coach_obj = request_data["coach"]
-                        coach_obj.update({'person': person["id"]})
-                        response = create_coach(coach_obj)
-                        if response.status_code == status.HTTP_200_OK:
-                            data = response.data
-                        else:
-                            data['error'] = response.data
+            # check if is coach
+            job_type_name = Utils.get_job_type_name(job_list=request_data['person']['job_type'])
+            if "coach" in job_type_name:
+                # create coach
+                if "coach" in request_data:
+                    coach_obj = request_data["coach"]
+                    coach_obj.update({'person': person["id"]})
+                    response = create_coach(coach_obj)
+                    if response.status_code == status.HTTP_200_OK:
+                        data = response.data
                     else:
-                        data['error'] = "invalid data"
+                        data['error'] = response.data
+                else:
+                    data['error'] = "invalid data"
 
-                if "error" in data.keys():
-                    PersonDB.objects.filter(id=person["id"]).delete()
-                    UserDB.objects.get(pk=data["user"]).delete()
-                    return JsonResponse(data["error"], safe=False)
-                else:  # the user created successfully
-                    if profile_img != '':  # save profile image if exists
-                        try:
-                            profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
-                                                                             email=request_data.get("user").get("email"),
-                                                                             person_id=person["id"])
-                            data.update({'profile_image_url': profile_img_presign_url})
-                            data.update({'token': token})
-                            return JsonResponse(data, safe=False)
-                        except Exception as ex:
-                            UserDB.objects.get(pk=data["user"]).delete()
-                            return Response({"error": "could not success to save profile image"}, status=status.HTTP_400_BAD_REQUEST)
-            except:
+            if "error" in data.keys():
+                PersonDB.objects.filter(id=person["id"]).delete()
                 UserDB.objects.get(pk=data["user"]).delete()
+                return JsonResponse(data["error"], safe=False)
+            else:  # the user created successfully
+                if profile_img != '':  # save profile image if exists
+                    try:
+                        profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
+                                                                         email=request_data.get("user").get("email"),
+                                                                         person_id=person["id"])
+                        data.update({'profile_image_url': profile_img_presign_url})
+                        data.update({'token': token})
+                        return JsonResponse(data, safe=False)
+                    except Exception as ex:
+                        UserDB.objects.get(pk=data["user"]).delete()
+                        return Response({"error": "could not success to save profile image"}, status=status.HTTP_400_BAD_REQUEST)
 
         else:
             return Response(response.data, status=status.HTTP_400_BAD_REQUEST)

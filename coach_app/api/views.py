@@ -33,21 +33,24 @@ def add_locations(locations,coach_obj):
 def create_coach(data):
     serializer = CoachSerializer(data=data)
     if serializer.is_valid():
-        person_id = data.get("person")
-        person_check = CoachDB.objects.filter(person=person_id)
-        person_coach = PersonDB.objects.get(pk=person_id)
-        person_serializer = PersonSerializer(person_coach)
-        # check if the person is not coach
-        # job_type_name = Utils.get_job_type_name(job_list=person_serializer.data["job_type"])
-        if "coach" not in person_serializer.data["job_type"]:
-            return Response({"error": "the user is not coach"})
-        if not person_check.exists():
-            coach_obj = serializer.save(person=PersonDB.objects.get(pk=person_id))
-            coach_obj = add_locations(data["locations"],coach_obj)
-            coach_serializer = CoachSerializer(coach_obj)
-            return Response(coach_serializer.data)
-        else:
-            return Response({"error": "the coach already exist"})
+        try:
+            person_id = data.get("person")
+            person_check = CoachDB.objects.filter(person=person_id)
+            person_coach = PersonDB.objects.get(pk=person_id)
+            person_serializer = PersonSerializer(person_coach)
+            # check if the person is not coach
+            # job_type_name = Utils.get_job_type_name(job_list=person_serializer.data["job_type"])
+            if "coach" not in person_serializer.data["job_type"]:
+                return Response({"error": "the user is not coach"})
+            if not person_check.exists():
+                coach_obj = serializer.save(person=PersonDB.objects.get(pk=person_id))
+                coach_obj = add_locations(data["locations"],coach_obj)
+                coach_serializer = CoachSerializer(coach_obj)
+                return Response(coach_serializer.data)
+            else:
+                return Response({"error": "the coach already exist"})
+        except Exception as ex:
+            return Response({"error": ex})
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
