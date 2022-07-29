@@ -13,10 +13,8 @@ class PostDB(models.Model):
     image_s3_path = models.CharField(null=True,
                                      blank=True,
                                      max_length=200,
-                                     default="s3://bfit-data-storage/users_images/user=liad/profile/ts_day=1656547200/liad.png")
-    # height_field = models.IntegerField(default=0)
-    # width_field = models.IntegerField(default=0)
-    # draft = models.BooleanField(default=False)
+                                     default="s3://bfit-data-storage/users/user=liad/profile/ts_day=1656547200/liad.png")
+
     body = models.TextField(null=True, blank=True)
     create_date = models.DateField(auto_now_add=True)
     update_date = models.DateField(auto_now=True)

@@ -88,11 +88,12 @@ class S3:
             print(e)
             return None
         return url
-
+    def delete_object(self,bucket,s3_key):
+        self.s3_client.delete_object(Bucket=bucket, Key=s3_key)
 if __name__ == "__main__":
 
 
     s3 = S3()
     # s3 = boto3.client('s3')
 
-    print(s3.create_presigned_get(bucket="bfit-data-storage",key="BANDANA.jpg"))
+    print(s3.delete_object(bucket="bfit-data-storage",s3_key="BANDANA.jpg"))

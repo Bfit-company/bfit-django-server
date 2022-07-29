@@ -7,11 +7,18 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
+from Utils.aws.s3 import S3
+from Utils.utils import Utils
+from config import BUCKET, S3_KEY
+from person_app.models import PersonDB
 from post_app.models import PostDB
 from post_app.api.serializer import PostSerializer
 from post_app.api.permissions import PostUserOrReadOnly, AdminOrReadOnly
 from rest_framework.views import APIView
 from Utils.aws.presign_url import PresignUrl
+
+s3 = S3()
+
 
 @api_view(['GET', 'POST'])
 def post_list(request):
@@ -21,15 +28,27 @@ def post_list(request):
         return Response(serializer.data)
 
     if request.method == 'POST':
-        serializer = PostSerializer(data=request.data)
+        post_data = request.data.get("post_data")
+        post_image = request.data.get("post_image")
+        post_data = json.loads(post_data)
+
+        serializer = PostSerializer(data=post_data)
         if serializer.is_valid():
             if (serializer.validated_data.get('body') is None or
                 serializer.validated_data.get('body') == '') and \
-                    (serializer.validated_data.get('image') is None or
-                     serializer.validated_data.get('image') == ''):
+                    (post_image is None or
+                     post_image == ''):
                 return Response({"error": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
-
-            serializer.save()
+            user_email = PersonDB.objects.select_related("user").get(pk=serializer.validated_data.get("person").pk).user.email
+            s3_key = S3_KEY.format(
+                user=user_email,
+                image_type="post_image",
+                ts_day=Utils.get_ts_today(),
+                filename=post_image.name
+            )
+            s3.upload_file_obj(bucket=BUCKET, s3_key=s3_key, file=post_image)
+            serializer = serializer.save(image_s3_path=f's3://{BUCKET}/{s3_key}')
+            serializer = PostSerializer(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -40,9 +59,6 @@ class GetPostsDetailByPostList(APIView):
         posts = PostDB.objects.filter(id__in=request.data['posts'])
         if posts.exists():
             serializer = PostSerializer(posts, many=True)
-            for post in serializer.data:
-                presign_url = PresignUrl.create_presigned_url(s3_path=post["image_s3_path"])
-                post["image_presigned_url"] = presign_url
             return Response(serializer.data, status.HTTP_200_OK)
         else:
             return Response([], status=status.HTTP_404_NOT_FOUND)
@@ -69,5 +85,11 @@ class PostDetail(APIView):
 
     def delete(self, request, pk):
         post = get_object_or_404(PostDB, pk=pk)
+        self.check_object_permissions(request, post)
+        image_s3_path = post.image_s3_path
+        bucket = s3.get_bucket_name_from_s3_path(image_s3_path)
+        s3_key = s3.get_s3_key_from_s3_path(image_s3_path)
+        s3.delete_object(bucket=bucket, s3_key=s3_key)
         post.delete()
+
         return Response("Delete Successfully", status=status.HTTP_200_OK)
