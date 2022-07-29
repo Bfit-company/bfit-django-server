@@ -15,7 +15,7 @@ class CoachDB(models.Model):
     )
     person = models.OneToOneField(PersonDB, on_delete=models.CASCADE, related_name='coach_detail')
     rating = models.FloatField(validators=[MaxValueValidator(5.0), MinValueValidator(1.0)], blank=True, default=1)
-    number_of_rating = models.IntegerField(blank=True,null=True, default=0)
+    number_of_rating = models.IntegerField(blank=True, null=True, default=0)
     from_price = models.IntegerField(blank=True, null=True, default=0)
     to_price = models.IntegerField(blank=True, default=0)
     is_train_at_home = models.BooleanField(default=False)
