@@ -68,6 +68,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware'
+
 ]
 
 ROOT_URLCONF = 'BfitServer.urls'
@@ -133,6 +135,10 @@ SWAGGER_SETTINGS = {
 #     }
 # }
 
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale/'),
+]
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -178,6 +184,11 @@ USE_L10N = True
 
 USE_TZ = True
 
+from django.utils.translation import gettext_lazy as _
+LANGUAGE = (
+    ('en', _('English')),
+    ('he', _('Hebrew'))
+)
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 

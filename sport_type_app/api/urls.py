@@ -1,12 +1,10 @@
 from django.urls import path
-from rest_framework.authtoken.views import obtain_auth_token
-from . import views
-from user_app.api.views import registration_view
-from user_app.api.views import logout_view
-from sport_type_app.api.views import sport_type_list_view
-from sport_type_app.api.views import sport_type_detail_view
+from sport_type_app.api.views import sport_type_list_view, SearchSportType
+from sport_type_app.api.views import sport_type_detail_view, InitSportType
 
 urlpatterns = [
     path('sport_type_list/', sport_type_list_view, name='sport_type_list'),
     path('sport_type_detail/<int:pk>/', sport_type_detail_view, name='sport_type_detail'),
+    path('search_sport_type/<str:sport_type>/', SearchSportType.as_view(), name='search_sport_type'),
+    path('init_sport_type/', InitSportType.as_view(), name='init_sport_type'),
 ]
