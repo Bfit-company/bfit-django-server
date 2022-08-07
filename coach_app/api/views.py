@@ -379,7 +379,7 @@ class SearchCoach(APIView):
         fav_sports = request.query_params.get("fav_sport")
         country = request.query_params.get("country")
         city = request.query_params.get("city")
-        is_train_at_home = request.query_params.get("is_train_at_home")
+        is_train_at_home = request.query_params.get("is_train_at_home") == 'true'
         limit = request.query_params.get("limit")
 
         name = name.strip()

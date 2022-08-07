@@ -60,6 +60,9 @@ class InitSportType(APIView):
 class SearchSportType(APIView):
 
     def get(self, request, sport_type):
-        sport_types = SportTypeDB.objects.filter(Q(name__icontains=sport_type))
+        if sport_type == '':
+            sport_types = SportTypeDB.objects.all()
+        else:
+            sport_types = SportTypeDB.objects.filter(Q(name__icontains=sport_type))
         serializer = SportTypeSerializer(sport_types, many=True)
         return Response(serializer.data)
