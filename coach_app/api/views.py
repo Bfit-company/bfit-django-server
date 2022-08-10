@@ -378,6 +378,7 @@ class SearchCoach(APIView):
         to_price = request.query_params.get("to_price")
         fav_sports = request.query_params.get("fav_sport")
         country = request.query_params.get("country")
+        gender_coach_type = request.query_params.get("gender_coach_type")
         city = request.query_params.get("city")
         is_train_at_home = request.query_params.get("is_train_at_home") == 'true'
         limit = request.query_params.get("limit")
@@ -405,6 +406,8 @@ class SearchCoach(APIView):
             query = query & Q(from_price__gte=from_price)
         if to_price != '':
             query = query & Q(to_price__gte=to_price)
+        if gender_coach_type != '':
+            query = query & Q(gender_coach_type=gender_coach_type)
 
 
         coaches = list(CoachDB.objects.select_related('person').filter(query)[:int(limit)])
