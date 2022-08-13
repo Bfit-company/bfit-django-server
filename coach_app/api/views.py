@@ -385,28 +385,28 @@ class SearchCoach(APIView):
 
         name = name.strip()
         query = Q()
-        if name != '':
+        if name != '' and name is not None:
             query = query & Q(person__full_name__icontains=name)  #
-        if limit == '':
+        if limit == '' and limit is not None:
             limit = MAX_LIMIT  # max limit
-        if fav_sports != '':  # fav_sport can be more than one
+        if fav_sports != '' and fav_sports is not None:  # fav_sport can be more than one
             sport_type_list = [int(x) for x in fav_sports.split(',')]
             query = query & Q(person__fav_sport__in=sport_type_list)
-        if rating != '':
+        if rating != '' and rating is not None:
             query = query & Q(rating__gte=rating)
-        if country != '':
+        if country != '' and country is not None:
             query = query & Q(locations__city__country__name__contains=country)
-        if city != '':
+        if city != '' and city is not None:
             query = query & Q(locations__city__name__contains=city)
-        if number_of_rating != '':
+        if number_of_rating != '' and number_of_rating is not None:
             query = query & Q(number_of_rating__gte=number_of_rating)
-        if is_train_at_home != '':
+        if is_train_at_home != '' and is_train_at_home is not None:
             query = query & Q(is_train_at_home=is_train_at_home)
-        if from_price != '':
+        if from_price != '' and from_price is not None:
             query = query & Q(from_price__gte=from_price)
-        if to_price != '':
+        if to_price != '' and to_price is not None:
             query = query & Q(to_price__gte=to_price)
-        if gender_coach_type != '':
+        if gender_coach_type != '' and gender_coach_type is not None:
             query = query & Q(gender_coach_type=gender_coach_type)
 
 

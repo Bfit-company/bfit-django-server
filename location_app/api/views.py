@@ -40,7 +40,7 @@ from rest_framework.views import APIView
 #     return None
 
 def create_location(data):
-    city = data['city']
+    city = data.get("city")
     location_obj = data
     serializer = LocationSerializer(data=location_obj)
     if serializer.is_valid():
@@ -48,7 +48,9 @@ def create_location(data):
             response = serializer.save(city=city)
         except ObjectDoesNotExist:
             return Response("not found", status=status.HTTP_404_NOT_FOUND)
-        if response["error"]:
+        except Exception as ex:
+            return Response(ex.args,status=status.HTTP_404_NOT_FOUND)
+        if not isinstance(response, LocationDB):  # if there is some error
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.data, status=status.HTTP_200_OK)
