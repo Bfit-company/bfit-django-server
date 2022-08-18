@@ -286,7 +286,7 @@ def full_user_create(request):
             if "error" in data.keys():
                 PersonDB.objects.filter(id=person["id"]).delete()
                 UserDB.objects.get(pk=data["user"]).delete()
-                return JsonResponse(data["error"], safe=False)
+                return JsonResponse(data["error"], status=status.HTTP_400_BAD_REQUEST, safe=False)
             else:  # the user created successfully
                 if profile_img != '':  # save profile image if exists
                     try:
