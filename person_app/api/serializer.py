@@ -1,13 +1,9 @@
-from django.core.exceptions import ObjectDoesNotExist
-from requests import Response
+
 from rest_framework import serializers, status
 
 from Utils.aws.presign_url import PresignUrl
-from job_type_app.api.serializer import JobTypeSerializer
 from person_app.models import PersonDB
 from datetime import date
-
-from post_app.api.serializer import PostSerializer
 from rating_app.api.serializer import RatingSerializer
 from sport_type_app.api.serializer import SportTypeSerializer
 
@@ -38,18 +34,20 @@ class PersonSerializer(serializers.ModelSerializer):
         return data
     # def create(self, validated_data):
     #     pass
-    # def save(self):
-        # phone_number = self.validated_data['phone_number']
-        #
-        # if PersonDB.objects.filter(phone_number=phone_number).exists():
-        #     raise serializers.ValidationError({'error': 'invalid phone number'})
-        #
-        # account = User(
-        #     email=self.validated_data['email'],
-        # )
-        # account.set_password(password)
-        # account.save()
-        # return account
+
+    # def save(self, validated_data):
+    #     fav_sports = validated_data.get("fav_sport")
+    #     instance = super(PersonSerializer, self).create(validated_data)
+    #     # for item in fav_sports:
+    #     #     instance.fav_sport.add(item)
+    #     phone_number = self.validated_data.get('phone_number')
+    #
+    #     if phone_number is not None and \
+    #             PersonDB.objects.filter(phone_number=phone_number).exists():
+    #         raise serializers.ValidationError({'error': 'invalid phone number'})
+    #
+    #     instance.save()
+    #     return instance
 
     def get_rating_coach(self, obj):
         return RatingSerializer(obj.rating.all(), many=True).data

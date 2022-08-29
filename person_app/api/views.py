@@ -5,7 +5,6 @@ from rest_framework.decorators import api_view, permission_classes
 
 from Utils.aws.s3 import S3
 from Utils.utils import Utils
-from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
 from config import BUCKET,S3_KEY
 from job_type_app.models import JobTypeDB
@@ -118,11 +117,11 @@ def person_list(request):
 
 def update_person(data, pk):
     person = get_object_or_404(PersonDB, pk=pk)
-    serializer = PersonSerializer(person, data=data,partial=True)
+    serializer = PersonSerializer(person, data=data, partial=True)
     if serializer.is_valid():
         if data.get('phone_number') and phone_number_exists(data["phone_number"], pk):
             return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
-        serializer.save()
+        serializer.save(fav_sport=data.get("fav_sport"))
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

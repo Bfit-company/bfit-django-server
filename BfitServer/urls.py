@@ -32,6 +32,7 @@ urlpatterns = [
                   path('location/', include('location_app.api.urls')),
                   path('rating/', include('rating_app.api.urls')),
                   path('job_type/', include('job_type_app.api.urls')),
+                  path('social_auth/', include('social_auth.api.urls')),
                   path('presign-url/', PresignUrl.as_view()),
                   path('', schema_view),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

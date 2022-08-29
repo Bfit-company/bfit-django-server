@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from coach_app.models import CoachDB
 from location_app.api.serializer import LocationSerializer
+from location_app.models import LocationDB
 from rating_app.api.serializer import RatesSerializer
 from person_app.api.serializer import PersonSerializer
 
@@ -10,6 +11,41 @@ class CoachSerializer(serializers.ModelSerializer):
     rates = serializers.SerializerMethodField()
     locations = LocationSerializer(many=True,read_only=True)
 
+    def update(self, instance, validated_data):
+        locations = validated_data.pop('locations')
+        person = validated_data.pop('person')
+        # coach = instance.save()
+        locations_id = []
+        coach = super(self.__class__, self).update(instance, validated_data)
+        person = super(PersonSerializer, PersonSerializer()).update(instance.person, person)
+        # coach_current_locations = coach.locations.all()
+
+        instance.locations.clear()
+
+        for location in locations:
+            city = location.get('city')
+            locations_serializer = LocationSerializer(data=location)
+            if locations_serializer.is_valid():
+                location = locations_serializer.save(city=city)
+                if isinstance(location, LocationDB):
+                    instance.locations.add(location.id)
+                else:
+                    instance.locations.add(location["id"])
+
+        instance.save()
+        return instance
+
+    # formatted_address = location.get('formatted_address')
+    # long = location.get('long')
+    # lat = location.get('lat')
+    #
+    # location_result = LocationDB.objects.filter(city=city,
+    #                                             formatted_address=formatted_address,
+    #                                             long=long,
+    #                                             lat=lat)
+    # if location_result.exists():
+    #     location_pk = list(location_result)[0].pk
+    #     location_pk
     def to_representation(self, instance):
         data = super(CoachSerializer, self).to_representation(instance)
         person = data.pop("person")
@@ -20,6 +56,8 @@ class CoachSerializer(serializers.ModelSerializer):
     class Meta:
         model = CoachDB
         fields = "__all__"
+
+
 
     def get_rates(self, obj):
         return RatesSerializer(obj.rates.all(), many=True).data
@@ -46,5 +84,12 @@ class CoachSerializer(serializers.ModelSerializer):
         #         inv_item.save()
         #     else:
         #         InvoiceItem.objects.create(account=instance, **item)
+    # def save(self, **validated_data):
+    #     locations = validated_data.get("locations")
+    #     instance = super(CoachSerializer, self).create(validated_data)
+    #     for item in locations:
+    #         instance.locations.add(item)
+    #
+    #     instance.save()
 
-        return instance
+

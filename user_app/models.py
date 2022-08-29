@@ -33,7 +33,8 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-
+AUTH_PROVIDERS={'facebook':'facebook','google':'google',
+                  'twitter':'twitter','email':'email'}
 class UserDB(AbstractBaseUser):
     email = models.EmailField(verbose_name='email', max_length=60, unique=True)
     date_joined = models.DateTimeField(verbose_name='date joined', auto_now_add=True)
@@ -42,7 +43,9 @@ class UserDB(AbstractBaseUser):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-
+    auth_provider = models.CharField(
+        max_length=255, blank=False,
+        null=False, default=AUTH_PROVIDERS.get('email'))
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []  # Email & Password are required by default.
 

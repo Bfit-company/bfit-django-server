@@ -74,6 +74,52 @@ class RegistrationViewSchema(AutoSchema):
 #         return manual_fields + extra_fields
 
 
+def login_user(request_data):
+    data = {}
+
+    if request_data["username"] == '' or request_data["password"] == '':
+        data['error'] = "some fields are empty"
+        return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = UserDB.objects.get(email=request_data["username"])  # get the user_id
+    except ObjectDoesNotExist:
+        data['error'] = "invalid email"
+        return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+    if not check_password(request_data['password'], user.password):
+        data['error'] = "invalid password"
+        return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+    is_coach = False
+    user_id = user.id
+    try:
+        coach = CoachDB.objects.select_related('person').get(Q(person__user=user_id))
+        if coach:  # check if the coach exists
+            serializer = CoachSerializer(coach)
+            data = serializer.data
+            is_coach = True
+    except ObjectDoesNotExist:
+        is_coach = False
+        print("coach not exist")
+
+    if not is_coach:
+        try:
+            person = PersonDB.objects.get(user=user_id)
+            if person:  # check if the trainee exists
+                serializer = PersonSerializer(person)
+                data = serializer.data
+                is_coach = False
+        except ObjectDoesNotExist:
+            data['error'] = "the user do not finish the registration"
+            data['user_id'] = user_id
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+    token, created = Token.objects.get_or_create(user=user)
+    data["token"] = token.key
+    return JsonResponse(data)
+
+
 @api_view(['POST', ])
 def logout_view(request):
     """
@@ -88,49 +134,7 @@ def logout_view(request):
 @schema(LoginViewSchema())
 def login_view(request):
     if request.method == 'POST':
-        data = {}
-
-        if request.data["username"] == '' or request.data["password"] == '':
-            data['error'] = "some fields are empty"
-            return Response(data, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = UserDB.objects.get(email=request.data["username"])  # get the user_id
-        except ObjectDoesNotExist:
-            data['error'] = "invalid email"
-            return Response(data, status=status.HTTP_400_BAD_REQUEST)
-
-        if not check_password(request.data['password'], user.password):
-            data['error'] = "invalid password"
-            return Response(data, status=status.HTTP_400_BAD_REQUEST)
-
-        is_coach = False
-        user_id = user.id
-        try:
-            coach = CoachDB.objects.select_related('person').get(Q(person__user=user_id))
-            if coach:  # check if the coach exists
-                serializer = CoachSerializer(coach)
-                data = serializer.data
-                is_coach = True
-        except ObjectDoesNotExist:
-            is_coach = False
-            print("coach not exist")
-
-        if not is_coach:
-            try:
-                person = PersonDB.objects.get(user=user_id)
-                if person:  # check if the trainee exists
-                    serializer = PersonSerializer(person)
-                    data = serializer.data
-                    is_coach = False
-            except ObjectDoesNotExist:
-                data['error'] = "the user do not finish the registration"
-                data['user_id'] = user_id
-                return Response(data, status=status.HTTP_400_BAD_REQUEST)
-
-        token, created = Token.objects.get_or_create(user=user)
-        data["token"] = token.key
-        return JsonResponse(data)
+        return login_user(request.data)
 
 
 @api_view(['POST', ])
@@ -245,66 +249,70 @@ def save_profile_img_to_s3(file, email, person_id):
 @api_view(['POST', ])
 # @schema(CreateFullUserViewSchema())
 def full_user_create(request):
-    '''
-        create full user with all the parameters
-        UI send form data because image file
-    '''
     if request.method == 'POST':
-        request_data = request.data["user_data"]
-        request_data = json.loads(request_data)  # str to dict
-        profile_img = request.data.get("file")
-        response = register(request_data["user"])
+        return create_full_user(request.data)
+
+
+def create_full_user(data):
+    '''
+         create full user with all the parameters
+         UI send form data because image file
+     '''
+    request_data = data["user_data"]
+    request_data = json.loads(request_data)  # str to dict
+    profile_img = data.get("file")
+    response = register(request_data["user"])
+    if response.status_code == status.HTTP_200_OK:
+        token = response.data["token"]
+        # create person
+        person_obj = request_data['person']
+        person_obj.update({'user': response.data["id"]})
+        response = create_person(person_obj)
+
         if response.status_code == status.HTTP_200_OK:
-            token = response.data["token"]
-            # create person
-            person_obj = request_data['person']
-            person_obj.update({'user': response.data["id"]})
-            response = create_person(person_obj)
-
-            if response.status_code == status.HTTP_200_OK:
-                person = response.data
-                data = person
-            else:
-                UserDB.objects.filter(id=person_obj["user"]).delete()
-                return response
-
-            # check if is coach
-            job_type_name = Utils.get_job_type_name(job_list=request_data['person']['job_type'])
-            if "coach" in job_type_name:
-                # create coach
-                if "coach" in request_data:
-                    coach_obj = request_data["coach"]
-                    coach_obj.update({'person': person["id"]})
-                    response = create_coach(coach_obj)
-                    if response.status_code == status.HTTP_200_OK:
-                        data = response.data
-                    else:
-                        data['error'] = response.data
-                else:
-                    data['error'] = "invalid data"
-
-            if "error" in data.keys():
-                PersonDB.objects.filter(id=person["id"]).delete()
-                UserDB.objects.get(pk=data["user"]).delete()
-                return JsonResponse(data["error"], status=status.HTTP_400_BAD_REQUEST, safe=False)
-            else:  # the user created successfully
-                if profile_img != '':  # save profile image if exists
-                    try:
-                        profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
-                                                                         email=request_data.get("user").get("email"),
-                                                                         person_id=person["id"])
-                        data.update({'profile_image_url': profile_img_presign_url})
-                        data.update({'token': token})
-                        return JsonResponse(data, safe=False)
-                    except Exception as ex:
-                        UserDB.objects.get(pk=data["user"]).delete()
-                        return Response({"error": "could not success to save profile image"}, status=status.HTTP_400_BAD_REQUEST)
-
+            person = response.data
+            data = person
         else:
-            return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
+            UserDB.objects.filter(id=person_obj["user"]).delete()
+            return response
 
-        return Response(response.data, status=status.HTTP_200_OK)
+        # check if is coach
+        job_type_name = Utils.get_job_type_name(job_list=request_data['person']['job_type'])
+        if "coach" in job_type_name:
+            # create coach
+            if "coach" in request_data:
+                coach_obj = request_data["coach"]
+                coach_obj.update({'person': person["id"]})
+                response = create_coach(coach_obj)
+                if response.status_code == status.HTTP_200_OK:
+                    data = response.data
+                else:
+                    data['error'] = response.data
+            else:
+                data['error'] = "invalid data"
 
+        if "error" in data.keys():
+            PersonDB.objects.filter(id=person["id"]).delete()
+            UserDB.objects.get(pk=data["user"]).delete()
+            return JsonResponse(data["error"], status=status.HTTP_400_BAD_REQUEST, safe=False)
+        else:  # the user created successfully
+            if profile_img != '':  # save profile image if exists
+                try:
+                    profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
+                                                                     email=request_data.get("user").get("email"),
+                                                                     person_id=person["id"])
+                    data.update({'profile_image_url': profile_img_presign_url})
+                    data.update({'token': token})
+                    return JsonResponse(data, safe=False)
+                except Exception as ex:
+                    UserDB.objects.get(pk=data["user"]).delete()
+                    return Response({"error": "could not success to save profile image"},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+    else:
+        return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(response.data, status=status.HTTP_200_OK)
 
 # work
 # @api_view(['POST', ])
