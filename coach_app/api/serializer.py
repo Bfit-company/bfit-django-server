@@ -21,16 +21,16 @@ class CoachSerializer(serializers.ModelSerializer):
         # coach_current_locations = coach.locations.all()
 
         instance.locations.clear()
-
-        for location in locations:
-            city = location.get('city')
-            locations_serializer = LocationSerializer(data=location)
-            if locations_serializer.is_valid():
-                location = locations_serializer.save(city=city)
-                if isinstance(location, LocationDB):
-                    instance.locations.add(location.id)
-                else:
-                    instance.locations.add(location["id"])
+        if locations is not None:
+            for location in locations:
+                city = location.get('city')
+                locations_serializer = LocationSerializer(data=location)
+                if locations_serializer.is_valid():
+                    location = locations_serializer.save(city=city)
+                    if isinstance(location, LocationDB):
+                        instance.locations.add(location.id)
+                    else:
+                        instance.locations.add(location["id"])
 
         instance.save()
         return instance
