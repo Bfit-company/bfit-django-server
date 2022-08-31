@@ -13,7 +13,7 @@ from coach_app.api.views import (
     coach_list_search_by_parameters,
     coach_list_by_parameters_sorted,
     ChangeCoachRating,
-    SearchCoach
+    SearchCoach, CoachesForMap
 )
 
 urlpatterns = [
@@ -31,7 +31,6 @@ urlpatterns = [
     path('change_coach_rating/<int:pk>/',
          ChangeCoachRating.as_view(),
          name='change_coach_rating'),
-    path('search_coach/',
-         SearchCoach.as_view(),
-         name='search_coach'),
+    path('search_coach/', SearchCoach.as_view(), name='search_coach'),
+    path('get_coaches_for_map/', CoachesForMap.as_view(), name='get_coaches_for_map'),
 ]
