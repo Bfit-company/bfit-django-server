@@ -12,16 +12,20 @@ class CoachSerializer(serializers.ModelSerializer):
     locations = LocationSerializer(many=True,read_only=True)
 
     def update(self, instance, validated_data):
-        locations = validated_data.pop('locations')
-        person = validated_data.pop('person')
-        # coach = instance.save()
-        locations_id = []
-        coach = super(self.__class__, self).update(instance, validated_data)
-        person = super(PersonSerializer, PersonSerializer()).update(instance.person, person)
-        # coach_current_locations = coach.locations.all()
+
+        locations = validated_data.get('locations')
+        if locations:
+            validated_data.pop('locations')
+
+        person = validated_data.get('person')
+        if person:
+            validated_data.pop('person')
+            person = super(PersonSerializer, PersonSerializer()).update(instance.person, person)
+
+        super(self.__class__, self).update(instance, validated_data)
 
         instance.locations.clear()
-        if locations is not None:
+        if locations:
             for location in locations:
                 city = location.get('city')
                 locations_serializer = LocationSerializer(data=location)

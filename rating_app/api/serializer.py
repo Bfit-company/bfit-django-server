@@ -12,7 +12,7 @@ class GeneralRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = RatingDB
         fields = "__all__"
-        depth = 1
+        # depth = 1
 
 
 class RatingSerializer(serializers.ModelSerializer):
