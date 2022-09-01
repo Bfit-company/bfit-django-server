@@ -20,6 +20,7 @@ from person_app.api.serializer import PersonSerializer
 from person_app.api.views import update_person
 from person_app.models import PersonDB
 
+
 def add_locations(locations,coach_obj):
     location_pk_arr = []
     for location in locations:
@@ -30,6 +31,8 @@ def add_locations(locations,coach_obj):
         coach_obj.locations.add(location_pk)
     coach_obj.save()
     return coach_obj
+
+
 def create_coach(data):
     serializer = CoachSerializer(data=data)
     if serializer.is_valid():
@@ -44,7 +47,7 @@ def create_coach(data):
                 return Response({"error": "the user is not coach"})
             if not person_check.exists():
                 coach_obj = serializer.save(person=PersonDB.objects.get(pk=person_id))
-                coach_obj = add_locations(data["locations"],coach_obj)
+                coach_obj = add_locations(data["locations"], coach_obj)
                 coach_serializer = CoachSerializer(coach_obj)
                 return Response(coach_serializer.data)
             else:
@@ -82,21 +85,16 @@ def coach_detail(request, pk):
 
         if serializer.is_valid():
             serializer.save(person=request.data.get("person"), locations=request.data.get("locations"))
-
+            # if profile_img != '' and profile_img is not None:  # save profile image if exists
+            #     try:
+            #         profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
+            #                                                          email=request_data.get("user").get("email"),
+            #                                                          person_id=person["id"])
+            #         data.update({'profile_image_url': profile_img_presign_url})
+            #         data.update({'token': token})
+            #         return JsonResponse(data, safe=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-        # coach = get_object_or_404(CoachDB, pk=pk)
-        # serializer = CoachSerializer(coach, data=request.data)
-        # if serializer.is_valid():
-        #     coach.person = get_object_or_404(PersonDB, pk=request.data["person"])
-        #     coach.description = request.data["description"]
-        #     coach.rating = request.data["rating"]
-        #     coach.save()
-        #
-        #     serializer = CoachSerializer(coach)
-        #     return Response(serializer.data)
-        # else:
-        #     return Response(serializer.errors)
 
     if request.method == 'DELETE':
         trainee = get_object_or_404(CoachDB, pk=pk)
@@ -294,7 +292,7 @@ class ChangeCoachRating(APIView):
 class CoachesForMap(APIView):
 
     def get(self, request):
-        coaches_with_long_and_lat = CoachDB.objects.filter(locations__long__isnull=False, locations__lat__isnull=False)
+        coaches_with_long_and_lat = CoachDB.objects.filter(locations__long__isnull=False, locations__lat__isnull=False).distinct()
         serializer = CoachSerializer(coaches_with_long_and_lat, many=True)
         return Response(serializer.data)
 

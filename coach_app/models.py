@@ -22,7 +22,7 @@ class CoachDB(models.Model):
     gender_coach_type = models.CharField(max_length=2, choices=GENDER_COACH_TYPE)
     description = models.CharField(max_length=255, blank=True)
     date_joined = models.DateTimeField(verbose_name='date_joined', auto_now_add=True)
-    locations = models.ManyToManyField(LocationDB)
+    locations = models.ManyToManyField(LocationDB, related_name="location")
 
 
     # todo:

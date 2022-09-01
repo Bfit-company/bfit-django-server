@@ -30,7 +30,8 @@ class CoachSerializer(serializers.ModelSerializer):
 
         try:
             person = validated_data.pop('person')
-            super(PersonSerializer, PersonSerializer()).update(instance.person, person)
+            if person:
+                super(PersonSerializer, PersonSerializer()).update(instance.person, person)
         except KeyError as ke:
             print(ke)
 
