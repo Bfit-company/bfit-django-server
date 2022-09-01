@@ -296,7 +296,7 @@ def create_full_user(data):
             UserDB.objects.get(pk=data["user"]).delete()
             return JsonResponse(data["error"], status=status.HTTP_400_BAD_REQUEST, safe=False)
         else:  # the user created successfully
-            if profile_img != '':  # save profile image if exists
+            if profile_img != '' and profile_img is not None:  # save profile image if exists
                 try:
                     profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
                                                                      email=request_data.get("user").get("email"),

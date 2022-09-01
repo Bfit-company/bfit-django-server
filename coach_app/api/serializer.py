@@ -12,30 +12,29 @@ class CoachSerializer(serializers.ModelSerializer):
     locations = LocationSerializer(many=True,read_only=True)
 
     def update(self, instance, validated_data):
+        try:
+            locations = validated_data.pop('locations')
+            instance.locations.clear()
+            if locations:
+                for location in locations:
+                    city = location.get('city')
+                    locations_serializer = LocationSerializer(data=location)
+                    if locations_serializer.is_valid():
+                        location = locations_serializer.save(city=city)
+                        if isinstance(location, LocationDB):
+                            instance.locations.add(location.id)
+                        else:
+                            instance.locations.add(location["id"])
+        except KeyError as ke:
+            print(ke)
 
-        locations = validated_data.get('locations')
-        if locations:
-            validated_data.pop('locations')
-
-        person = validated_data.get('person')
-        if person:
-            validated_data.pop('person')
-            person = super(PersonSerializer, PersonSerializer()).update(instance.person, person)
+        try:
+            person = validated_data.pop('person')
+            super(PersonSerializer, PersonSerializer()).update(instance.person, person)
+        except KeyError as ke:
+            print(ke)
 
         super(self.__class__, self).update(instance, validated_data)
-
-        instance.locations.clear()
-        if locations:
-            for location in locations:
-                city = location.get('city')
-                locations_serializer = LocationSerializer(data=location)
-                if locations_serializer.is_valid():
-                    location = locations_serializer.save(city=city)
-                    if isinstance(location, LocationDB):
-                        instance.locations.add(location.id)
-                    else:
-                        instance.locations.add(location["id"])
-
         instance.save()
         return instance
 

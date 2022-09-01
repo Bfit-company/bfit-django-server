@@ -75,7 +75,6 @@ def coach_detail(request, pk):
     if request.method == 'PUT':
         coach = get_object_or_404(CoachDB, pk=pk)
         serializer = CoachSerializer(coach, data=request.data, partial=True)
-
         # if request.data.get("person"):
         #     response = update_person(request.data["person"], coach.person_id)
         #     if response.status_code != 200:
@@ -83,6 +82,7 @@ def coach_detail(request, pk):
 
         if serializer.is_valid():
             serializer.save(person=request.data.get("person"), locations=request.data.get("locations"))
+
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
         # coach = get_object_or_404(CoachDB, pk=pk)
