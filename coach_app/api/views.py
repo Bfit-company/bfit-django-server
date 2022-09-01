@@ -1,9 +1,7 @@
-import serializers as serializers
+import json
 from django.db.models import Q
-from django.db.models.functions import Concat
-from django.http import HttpResponse
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 
 from Utils.utils import Utils
@@ -12,16 +10,13 @@ from coach_app.models import CoachDB
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from random import shuffle
-
-from location_app.api.serializer import LocationSerializer
 from location_app.api.views import create_location
-from location_app.models import LocationDB
 from person_app.api.serializer import PersonSerializer
-from person_app.api.views import update_person
 from person_app.models import PersonDB
+from user_app.models import UserDB
 
 
-def add_locations(locations,coach_obj):
+def add_locations(locations, coach_obj):
     location_pk_arr = []
     for location in locations:
         response = create_location(location)
@@ -42,7 +37,6 @@ def create_coach(data):
             person_coach = PersonDB.objects.get(pk=person_id)
             person_serializer = PersonSerializer(person_coach)
             # check if the person is not coach
-            # job_type_name = Utils.get_job_type_name(job_list=person_serializer.data["job_type"])
             if "coach" not in person_serializer.data["job_type"]:
                 return Response({"error": "the user is not coach"})
             if not person_check.exists():
@@ -76,23 +70,32 @@ def coach_detail(request, pk):
         return Response(serializer.data)
 
     if request.method == 'PUT':
+        request_data = request.data["user_data"]
+        request_data = json.loads(request_data)  # str to dict
+        profile_img = request.data.get("file")
+        presign_url = None
+
         coach = get_object_or_404(CoachDB, pk=pk)
-        serializer = CoachSerializer(coach, data=request.data, partial=True)
+        serializer = CoachSerializer(coach, data=request_data, partial=True)
+
         # if request.data.get("person"):
         #     response = update_person(request.data["person"], coach.person_id)
         #     if response.status_code != 200:
         #         return Response(response)
 
         if serializer.is_valid():
+            if profile_img != '' and profile_img is not None:  # save profile image if exists
+                try:
+                    presign_url = Utils.save_profile_img_to_s3(file=profile_img,
+                                                               email=coach.person.user.email,
+                                                               person_id=coach.person.id)
+                except Exception as ex:
+                    raise {"error": "could not success to save profile image",
+                           "Exception": ex}
+
             serializer.save(person=request.data.get("person"), locations=request.data.get("locations"))
-            # if profile_img != '' and profile_img is not None:  # save profile image if exists
-            #     try:
-            #         profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
-            #                                                          email=request_data.get("user").get("email"),
-            #                                                          person_id=person["id"])
-            #         data.update({'profile_image_url': profile_img_presign_url})
-            #         data.update({'token': token})
-            #         return JsonResponse(data, safe=False)
+            if presign_url:
+                serializer.data.update({"profile_image_url": presign_url})
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
@@ -292,9 +295,11 @@ class ChangeCoachRating(APIView):
 class CoachesForMap(APIView):
 
     def get(self, request):
-        coaches_with_long_and_lat = CoachDB.objects.filter(locations__long__isnull=False, locations__lat__isnull=False).distinct()
+        coaches_with_long_and_lat = CoachDB.objects.filter(locations__long__isnull=False,
+                                                           locations__lat__isnull=False).distinct()
         serializer = CoachSerializer(coaches_with_long_and_lat, many=True)
         return Response(serializer.data)
+
 
 class SearchCoach(APIView):
 
@@ -336,7 +341,6 @@ class SearchCoach(APIView):
             query = query & Q(to_price__gte=to_price)
         if gender_coach_type != '' and gender_coach_type is not None:
             query = query & Q(gender_coach_type=gender_coach_type)
-
 
         coaches = list(CoachDB.objects.select_related('person').filter(query)[:int(limit)])
 

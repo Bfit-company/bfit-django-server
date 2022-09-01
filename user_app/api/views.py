@@ -229,23 +229,6 @@ def register(user_data):
     return Response(data)
 
 
-def save_profile_img_to_s3(file, email, person_id):
-    try:
-        s3 = S3()
-        s3_key = S3_KEY.format(
-            user=email,
-            image_type="profile_image",
-            ts_day=Utils.get_ts_today(),
-            filename=file.name
-        )
-        s3.upload_file_obj(file=file, bucket=BUCKET, s3_key=s3_key)
-        s3_path = f's3://{BUCKET}/{s3_key}'
-        PersonDB.objects.filter(pk=person_id).update(profile_image_s3_path=s3_path)
-        return PresignUrl().create_presigned_url(s3_path)
-    except Exception as ex:
-        raise ex
-
-
 @api_view(['POST', ])
 # @schema(CreateFullUserViewSchema())
 def full_user_create(request):
@@ -298,9 +281,9 @@ def create_full_user(data):
         else:  # the user created successfully
             if profile_img != '' and profile_img is not None:  # save profile image if exists
                 try:
-                    profile_img_presign_url = save_profile_img_to_s3(file=profile_img,
-                                                                     email=request_data.get("user").get("email"),
-                                                                     person_id=person["id"])
+                    profile_img_presign_url = Utils.save_profile_img_to_s3(file=profile_img,
+                                                                           email=request_data.get("user").get("email"),
+                                                                           person_id=person["id"])
                     data.update({'profile_image_url': profile_img_presign_url})
                     data.update({'token': token})
                     return JsonResponse(data, safe=False)
@@ -313,6 +296,7 @@ def create_full_user(data):
         return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(response.data, status=status.HTTP_200_OK)
+
 
 # work
 # @api_view(['POST', ])

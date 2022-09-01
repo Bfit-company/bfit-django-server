@@ -1,7 +1,11 @@
 from django.db.models import Q
 from datetime import datetime, timezone
-from job_type_app.models import JobTypeDB
 
+from Utils.aws.presign_url import PresignUrl
+from Utils.aws.s3 import S3
+from config import S3_KEY, BUCKET
+from job_type_app.models import JobTypeDB
+from person_app.models import PersonDB
 
 
 class Utils:
@@ -35,5 +39,22 @@ class Utils:
             job_name_list.append(job.name)
 
         return job_name_list
+
+    @staticmethod
+    def save_profile_img_to_s3(file, email, person_id):
+        try:
+            s3 = S3()
+            s3_key = S3_KEY.format(
+                user=email,
+                image_type="profile_image",
+                ts_day=Utils.get_ts_today(),
+                filename=file.name
+            )
+            s3.upload_file_obj(file=file, bucket=BUCKET, s3_key=s3_key)
+            s3_path = f's3://{BUCKET}/{s3_key}'
+            PersonDB.objects.filter(pk=person_id).update(profile_image_s3_path=s3_path)
+            return PresignUrl().create_presigned_url(s3_path)
+        except Exception as ex:
+            raise ex
 
 
