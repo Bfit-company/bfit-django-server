@@ -285,8 +285,7 @@ def create_full_user(data):
                                                                            email=request_data.get("user").get("email"),
                                                                            person_id=person["id"])
                     data.update({'profile_image_url': profile_img_presign_url})
-                    data.update({'token': token})
-                    return JsonResponse(data, safe=False)
+                    # return JsonResponse(data, safe=False)
                 except Exception as ex:
                     UserDB.objects.get(pk=data["user"]).delete()
                     return Response({"error": "could not success to save profile image"},
@@ -295,6 +294,7 @@ def create_full_user(data):
     else:
         return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
 
+    data.update({'token': token})
     return Response(response.data, status=status.HTTP_200_OK)
 
 
