@@ -335,7 +335,7 @@ class SearchCoach(APIView):
         if is_train_at_home != '' and is_train_at_home is not None:
             query = query & Q(is_train_at_home=is_train_at_home)
         if price != '' and price is not None:
-            query = query & Q(price__gte=price)
+            query = query & Q(price__lte=price)
         if gender_coach_type != '' and gender_coach_type is not None:
             query = query & Q(gender_coach_type=gender_coach_type)
 
