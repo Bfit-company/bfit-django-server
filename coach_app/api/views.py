@@ -93,7 +93,7 @@ def coach_detail(request, pk):
                     raise {"error": "could not success to save profile image",
                            "Exception": ex}
 
-            serializer.save(person=request.data.get("person"), locations=request.data.get("locations"))
+            serializer.save(person=request_data.get("person"), locations=request.data.get("locations"))
             if presign_url:
                 serializer.data.update({"profile_image_url": presign_url})
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -307,8 +307,7 @@ class SearchCoach(APIView):
         name = request.query_params.get("name")
         rating = request.query_params.get("rating")
         number_of_rating = request.query_params.get("number_of_rating")
-        from_price = request.query_params.get("from_price")
-        to_price = request.query_params.get("to_price")
+        price = request.query_params.get("price")
         fav_sports = request.query_params.get("fav_sport")
         country = request.query_params.get("country")
         gender_coach_type = request.query_params.get("gender_coach_type")
@@ -335,10 +334,8 @@ class SearchCoach(APIView):
             query = query & Q(number_of_rating__gte=number_of_rating)
         if is_train_at_home != '' and is_train_at_home is not None:
             query = query & Q(is_train_at_home=is_train_at_home)
-        if from_price != '' and from_price is not None:
-            query = query & Q(from_price__gte=from_price)
-        if to_price != '' and to_price is not None:
-            query = query & Q(to_price__gte=to_price)
+        if price != '' and price is not None:
+            query = query & Q(price__gte=price)
         if gender_coach_type != '' and gender_coach_type is not None:
             query = query & Q(gender_coach_type=gender_coach_type)
 
