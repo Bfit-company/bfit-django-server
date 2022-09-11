@@ -1,4 +1,3 @@
-
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -6,7 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from Utils.aws.s3 import S3
 from Utils.utils import Utils
 from coach_app.models import CoachDB
-from config import BUCKET,S3_KEY
+from config import BUCKET, S3_KEY
 from job_type_app.models import JobTypeDB
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
@@ -20,13 +19,14 @@ from user_app.models import UserDB
 
 
 class PersonList(APIView):
-    def get(self,request):
+    def get(self, request):
         all_trainee_list = PersonDB.objects.all()
         serializer = PersonSerializer(all_trainee_list, many=True)
         return Response(serializer.data)
 
-    def post(self,request):
+    def post(self, request):
         create_person(request.data)
+
 
 def person_validate(data):
     res = {}
@@ -39,7 +39,7 @@ def person_validate(data):
     return res
 
 
-def add_fav_sport(data,serializer):
+def add_fav_sport(data, serializer):
     # add favorite sport to coach list
     fav_arr = []
     for fav in data["fav_sport"]:
@@ -53,7 +53,8 @@ def add_fav_sport(data,serializer):
     person_obj.save()
     return person_obj
 
-def add_job_type(person_obj,data,serializer):
+
+def add_job_type(person_obj, data, serializer):
     job_arr = []
     for fav in data["job_type"]:
         job_obj = JobTypeDB.objects.get(pk=fav)
@@ -65,6 +66,7 @@ def add_job_type(person_obj,data,serializer):
     person_obj.save()
     return person_obj
 
+
 def create_person(data):
     serializer = PersonSerializer(data=data)
     if serializer.is_valid():
@@ -74,14 +76,15 @@ def create_person(data):
             return Response(validation, status=status.HTTP_400_BAD_REQUEST)
         try:
             person_obj = add_fav_sport(data, serializer)
-            person_obj = add_job_type(person_obj,  data, serializer)
+            person_obj = add_job_type(person_obj, data, serializer)
         except Exception as ex:
-            return Response({"error": "invalid data"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = PersonSerializer(person_obj)
         return Response(serializer.data)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'POST'])
 def person_list(request):
@@ -115,16 +118,24 @@ def person_list(request):
         # else:
         #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 def update_person(data, pk):
     person = get_object_or_404(PersonDB, pk=pk)
     serializer = PersonSerializer(person, data=data, partial=True)
     if serializer.is_valid():
         if data.get('phone_number') and phone_number_exists(data["phone_number"], pk):
             return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
-        serializer.save(fav_sport=data.get("fav_sport"))
+
+        # check if there is change in fav_sports
+        if data.get("fav_sport"):
+            serializer.save(fav_sport=data.get("fav_sport"))
+        else:
+            serializer.save()
+
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'DELETE', 'PUT'])
 def person_detail(request, pk):
@@ -134,7 +145,7 @@ def person_detail(request, pk):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        update_person(request.data,pk)
+        return update_person(request.data, pk)
 
     if request.method == 'DELETE':
         trainee = get_object_or_404(PersonDB, pk=pk)
