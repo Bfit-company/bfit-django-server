@@ -57,4 +57,18 @@ class Utils:
         except Exception as ex:
             raise ex
 
-
+    @staticmethod
+    def profile_img_s3_path(file, email):
+        try:
+            s3 = S3()
+            s3_key = S3_KEY.format(
+                user=email,
+                image_type="profile_image",
+                ts_day=Utils.get_ts_today(),
+                filename=file.name
+            )
+            s3.upload_file_obj(file=file, bucket=BUCKET, s3_key=s3_key)
+            s3_path = f's3://{BUCKET}/{s3_key}'
+            return s3_path
+        except Exception as ex:
+            raise ex

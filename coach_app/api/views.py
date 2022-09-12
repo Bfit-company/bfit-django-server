@@ -86,16 +86,16 @@ def coach_detail(request, pk):
         if serializer.is_valid():
             if profile_img != '' and profile_img is not None:  # save profile image if exists
                 try:
-                    presign_url = Utils.save_profile_img_to_s3(file=profile_img,
-                                                               email=coach.person.user.email,
-                                                               person_id=coach.person.id)
+                    person = request_data.get("person")
+                    person.update({"profile_image_s3_path": Utils.profile_img_s3_path(file=profile_img,
+                                                                                    email=coach.person.user.email)})
                 except Exception as ex:
                     raise {"error": "could not success to save profile image",
                            "Exception": ex}
 
-            serializer.save(person=request_data.get("person"), locations=request.data.get("locations"))
-            if presign_url:
-                serializer.data.update({"profile_image_url": presign_url})
+            serializer.save(person=request_data.get("person"), locations=request.data.get("locations"),)
+            # if presign_url:
+            #     # serializer.data.update({"profile_image_url": presign_url})
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
