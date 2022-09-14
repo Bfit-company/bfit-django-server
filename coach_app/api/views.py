@@ -93,7 +93,7 @@ def coach_detail(request, pk):
                     raise {"error": "could not success to save profile image",
                            "Exception": ex}
 
-            serializer.save(person=request_data.get("person"), locations=request.data.get("locations"),)
+            serializer.save(person=request_data.get("person"), locations=request_data.get("locations"),)
             # if presign_url:
             #     # serializer.data.update({"profile_image_url": presign_url})
             return Response(serializer.data, status=status.HTTP_200_OK)
