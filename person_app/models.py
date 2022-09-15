@@ -29,10 +29,10 @@ class PersonDB(models.Model):
                                              max_length=200,
                                              blank=True)
     business_email = models.EmailField(null=True, blank=False)
-    instagram_url = models.URLField(null=True, blank=True)
-    youtube_url = models.URLField(null=True, blank=True)
-    tiktok_url = models.URLField(null=True, blank=True)
-    facebook_url = models.URLField(null=True, blank=True)
+    instagram_url = models.URLField(max_length=500, null=True, blank=True)
+    youtube_url = models.URLField(max_length=500, null=True, blank=True)
+    tiktok_url = models.URLField(max_length=500, null=True, blank=True)
+    facebook_url = models.URLField(max_length=500, null=True, blank=True)
     job_type = models.ManyToManyField(JobTypeDB)
 
     def __str__(self):
