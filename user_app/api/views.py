@@ -384,6 +384,16 @@ class UpdateUser(APIView):
         except Exception as ex:
             return Response(ex, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, pk):
+        user = get_object_or_404(UserDB, pk=pk)
+        # logout
+        token = Token.objects.filter(user_id=pk)
+        if token.exists():
+            token.delete()
+        user.delete()
+        return Response("Delete Successfully", status=status.HTTP_200_OK)
+
+
 
 from rest_framework import status
 from rest_framework import generics
