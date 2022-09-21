@@ -1,11 +1,12 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from sport_type_app.api.serializer import SportTypeSerializer
 from sport_type_app.models import SportTypeDB
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from django.db.models import Q
+from rest_framework.permissions import AllowAny
 
 
 @api_view(['GET', 'POST'])
@@ -25,10 +26,11 @@ def sport_type_list_view(request):
 
 
 @api_view(['GET', 'DELETE', 'PUT'])
+@permission_classes([AllowAny])
 def sport_type_detail_view(request, pk):
     if request.method == 'GET':
-        trainee = get_object_or_404(SportTypeDB, pk=pk)
-        serializer = SportTypeSerializer(trainee)
+        sports_type = get_object_or_404(SportTypeDB, pk=pk)
+        serializer = SportTypeSerializer(sports_type)
         return Response(serializer.data)
 
     if request.method == 'PUT':
@@ -58,7 +60,6 @@ class InitSportType(APIView):
 
 
 class SearchSportType(APIView):
-
     def get(self, request, sport_type):
         if sport_type == '':
             sport_types = SportTypeDB.objects.all()
