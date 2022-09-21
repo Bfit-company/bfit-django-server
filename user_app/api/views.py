@@ -5,10 +5,10 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view, schema
+from rest_framework.decorators import api_view, schema, permission_classes
 import re
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 import requests
 
 from Utils.aws.presign_url import PresignUrl
@@ -132,6 +132,7 @@ def logout_view(request):
 
 @api_view(['POST', ])
 @schema(LoginViewSchema())
+@permission_classes([AllowAny])
 def login_view(request):
     if request.method == 'POST':
         return login_user(request.data)
@@ -231,6 +232,7 @@ def register(user_data):
 
 @api_view(['POST', ])
 # @schema(CreateFullUserViewSchema())
+@permission_classes([AllowAny])
 def full_user_create(request):
     if request.method == 'POST':
         return create_full_user(request.data)

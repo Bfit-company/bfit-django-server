@@ -31,6 +31,8 @@ def post_list(request):
         post_data = request.data.get("post_data")
         post_image = request.data.get("post_image")
         post_data = json.loads(post_data)
+        person_id = get_object_or_404(PersonDB,user_id=request.user.pk).pk
+        post_data.update({"person":person_id})
 
         serializer = PostSerializer(data=post_data)
         if serializer.is_valid():
@@ -39,7 +41,7 @@ def post_list(request):
                     (post_image is None or
                      post_image == ''):
                 return Response({"error": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
-            user_email = PersonDB.objects.select_related("user").get(pk=serializer.validated_data.get("person").pk).user.email
+            user_email = request.user.email
             s3_key = S3_KEY.format(
                 user=user_email,
                 image_type="post_image",
@@ -76,9 +78,25 @@ class PostDetail(APIView):
     def put(self, request, pk):
         post = get_object_or_404(PostDB, pk=pk)
         self.check_object_permissions(request, post)
-        serializer = PostSerializer(post, data=request.data)
+        post_data = request.data.get("post_data")
+        post_image = request.data.get("post_image")
+        post_data = json.loads(post_data)
+        serializer = PostSerializer(post, data=post_data, partial=True)
+        image_s3_path = None
+
         if serializer.is_valid():
-            serializer.save()
+            if post_image is not None:
+                user_email = request.user.email
+                s3_key = S3_KEY.format(
+                    user=user_email,
+                    image_type="post_image",
+                    ts_day=Utils.get_ts_today(),
+                    filename=post_image.name
+                )
+                s3.upload_file_obj(bucket=BUCKET, s3_key=s3_key, file=post_image)
+                image_s3_path = f's3://{BUCKET}/{s3_key}'
+            serializer = serializer.save(image_s3_path=image_s3_path)
+            serializer = PostSerializer(serializer)
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
