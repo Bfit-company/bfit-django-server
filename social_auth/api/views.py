@@ -3,10 +3,12 @@ from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from ..api.serializer import GoogleSocialAuthSerializer
 from .register import register_social_user, login_social_user
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 class SignupGoogleSocialAuthView(GenericAPIView):
     serializer_class = GoogleSocialAuthSerializer
+    permission_classes = [AllowAny]
 
     def post(self, request):
         """
