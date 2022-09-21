@@ -7,6 +7,7 @@ from Utils.utils import Utils
 from coach_app.models import CoachDB
 from config import BUCKET, S3_KEY
 from job_type_app.models import JobTypeDB
+from person_app.api.permissions import PersonUserOrReadOnly
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
 from rest_framework.response import Response
@@ -137,17 +138,22 @@ def update_person(data, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET', 'DELETE', 'PUT'])
-def person_detail(request, pk):
-    if request.method == 'GET':
+# @api_view(['GET', 'DELETE', 'PUT'])
+# def person_detail(request, pk):
+class PersonDetail(APIView):
+    permission_classes = [PersonUserOrReadOnly]
+
+    def get(self,request,pk):
         person = get_object_or_404(PersonDB, pk=pk)
         serializer = PersonSerializer(person)
         return Response(serializer.data)
 
-    if request.method == 'PUT':
+    def put(self, request, pk):
+        person = get_object_or_404(PersonDB, pk=pk)
+        self.check_object_permissions(request, person)
         return update_person(request.data, pk)
 
-    if request.method == 'DELETE':
+    def delete(self, request, pk):
         trainee = get_object_or_404(PersonDB, pk=pk)
         trainee.delete()
         return Response("Delete Successfully", status=status.HTTP_200_OK)

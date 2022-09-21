@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 
 from Utils.utils import Utils
+from coach_app.api.permissions import CoachUserOrReadOnly
 from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
 from rest_framework.response import Response
@@ -62,20 +63,24 @@ def coach_list(request):
         return create_coach(request.data)
 
 
-@api_view(['GET', 'DELETE', 'PUT'])
-def coach_detail(request, pk):
-    if request.method == 'GET':
+# @api_view(['GET', 'DELETE', 'PUT'])
+# def coach_detail(request, pk):
+class CoachDetail(APIView):
+    permission_classes = [CoachUserOrReadOnly]
+
+    def get(self, request, pk):
         coach = get_object_or_404(CoachDB, pk=pk)
         serializer = CoachSerializer(coach)
         return Response(serializer.data)
 
-    if request.method == 'PUT':
+    def put(self, request, pk):
         request_data = request.data["user_data"]
         request_data = json.loads(request_data)  # str to dict
         profile_img = request.data.get("file")
         presign_url = None
 
         coach = get_object_or_404(CoachDB, pk=pk)
+        self.check_object_permissions(request, coach)
         serializer = CoachSerializer(coach, data=request_data, partial=True)
 
         # if request.data.get("person"):
@@ -88,18 +93,18 @@ def coach_detail(request, pk):
                 try:
                     person = request_data.get("person")
                     person.update({"profile_image_s3_path": Utils.profile_img_s3_path(file=profile_img,
-                                                                                    email=coach.person.user.email)})
+                                                                                      email=coach.person.user.email)})
                 except Exception as ex:
                     raise {"error": "could not success to save profile image",
                            "Exception": ex}
 
-            serializer.save(person=request_data.get("person"), locations=request_data.get("locations"),)
+            serializer.save(person=request_data.get("person"), locations=request_data.get("locations"), )
             # if presign_url:
             #     # serializer.data.update({"profile_image_url": presign_url})
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
-    if request.method == 'DELETE':
+    def delete(self, request, pk):
         trainee = get_object_or_404(CoachDB, pk=pk)
         trainee.delete()
         return Response("Delete Successfully", status=status.HTTP_200_OK)

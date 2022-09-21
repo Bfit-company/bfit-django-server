@@ -6,17 +6,27 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from django.db.models import Q
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser
 
 
-@api_view(['GET', 'POST'])
-def sport_type_list_view(request):
-    if request.method == 'GET':
+
+class SportTypeListView(APIView):
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.request.method == 'GET':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
+    def get(self,request):
         all_trainee_list = SportTypeDB.objects.all()
         serializer = SportTypeSerializer(all_trainee_list, many=True)
         return Response(serializer.data)
 
-    if request.method == 'POST':
+    def post(self,request):
         serializer = SportTypeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -25,15 +35,27 @@ def sport_type_list_view(request):
             return Response(serializer.errors)
 
 
-@api_view(['GET', 'DELETE', 'PUT'])
-@permission_classes([AllowAny])
-def sport_type_detail_view(request, pk):
-    if request.method == 'GET':
+# @api_view(['GET', 'DELETE', 'PUT'])
+# @permission_classes([AllowAny])
+# def sport_type_detail_view(request, pk):
+class SportTypeDetailView(APIView):
+    # def get_permissions(self):
+    #     """
+    #     Instantiates and returns the list of permissions that this view requires.
+    #     """
+    #     if self.request.method == 'GET':
+    #         permission_classes = [AllowAny]
+    #     else:
+    #         permission_classes = [IsAdminUser]
+    #     return [permission() for permission in permission_classes]
+    # permission_classes = [AllowAny]
+
+    def get(self, request, pk):
         sports_type = get_object_or_404(SportTypeDB, pk=pk)
         serializer = SportTypeSerializer(sports_type)
         return Response(serializer.data)
 
-    if request.method == 'PUT':
+    def put(self, request, pk):
         trainee = get_object_or_404(SportTypeDB, pk=pk)
         serializer = SportTypeSerializer(trainee, data=request.data)
         if serializer.is_valid():
@@ -42,7 +64,7 @@ def sport_type_detail_view(request, pk):
         else:
             return Response(serializer.errors)
 
-    if request.method == 'DELETE':
+    def delete(self, request, pk):
         trainee = get_object_or_404(SportTypeDB, pk=pk)
         trainee.delete()
         return Response("Delete Successfully", status=status.HTTP_200_OK)
