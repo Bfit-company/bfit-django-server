@@ -1,6 +1,5 @@
 from django.urls import path
 
-from sport_type_app.api.views import sport_type_detail_view
 from .views import RatingList, RatingDetail,RatingDetailDelete,RatingDetailUpdate
 
 urlpatterns = [
