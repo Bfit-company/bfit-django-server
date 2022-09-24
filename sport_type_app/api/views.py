@@ -71,7 +71,7 @@ class SportTypeDetailView(APIView):
 
 
 class InitSportType(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = SportTypeSerializer(data=request.data, many=True)
         if serializer.is_valid():
