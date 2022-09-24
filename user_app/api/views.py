@@ -205,6 +205,7 @@ def user_registration_validate(data):
 
 
 @api_view(['POST', ])
+@permission_classes([AllowAny])
 def register_validation(request):
     if request.method == 'POST':
         return user_registration_validate(request.data)
