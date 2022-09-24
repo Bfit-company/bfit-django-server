@@ -129,14 +129,17 @@ class RatingDetailUpdate(GenericAPIView):
         yes -> update rating
         no -> create rating
         """
-        rating_obj = RatingDB.objects.filter(person_id=request.data["person_id"],
+        person_id = get_object_or_404(PersonDB, user_id=request.user).pk
+        rating_obj = RatingDB.objects.filter(person_id=person_id,
                                              rating_coach_id=request.data["rating_coach_id"])
+        data = request.data
         if rating_obj.exists():
             rating_obj = rating_obj.first()
-            return rating_handler(request.data, rating_obj, rating_obj.rating, method="PUT")
+            return rating_handler(data, rating_obj, rating_obj.rating, method="PUT")
 
         else:
-            return rating_handler(request.data, method="POST")
+            data.update({"person_id": person_id})
+            return rating_handler(data, method="POST")
 
             # rating_handler(request.data, rating_obj, rating_obj.rating,method="PUT")
         # rating_obj = get_object_or_404(RatingDB,
