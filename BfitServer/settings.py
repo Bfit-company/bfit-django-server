@@ -29,7 +29,7 @@ EMAIL_BACKEND = 'django_ses.SESBackend'
 AWS_SES_REGION_NAME = 'eu-central-1'
 AWS_SES_REGION_ENDPOINT = 'email.eu-central-1.amazonaws.com'
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = ["*"]
 # CORS_ORIGIN_ALLOW_ALL = True
