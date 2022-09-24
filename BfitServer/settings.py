@@ -29,7 +29,7 @@ EMAIL_BACKEND = 'django_ses.SESBackend'
 AWS_SES_REGION_NAME = 'eu-central-1'
 AWS_SES_REGION_ENDPOINT = 'email.eu-central-1.amazonaws.com'
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 # CORS_ORIGIN_ALLOW_ALL = True
@@ -124,31 +124,31 @@ SWAGGER_SETTINGS = {
 # }
 #
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': os.getenv('MYSQL_DATABASE'),
-#         'HOST': os.getenv('MYSQL_DATABASE_HOST'),
-#         'PORT': os.getenv('MYSQL_DATABASE_PORT'),
-#         'USER': os.getenv('MYSQL_USER'),
-#         'PASSWORD': os.getenv('MYSQL_ROOT_PASSWORD'),
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('MYSQL_DATABASE'),
+        'HOST': os.getenv('MYSQL_DATABASE_HOST'),
+        'PORT': os.getenv('MYSQL_DATABASE_PORT'),
+        'USER': os.getenv('MYSQL_USER'),
+        'PASSWORD': os.getenv('MYSQL_ROOT_PASSWORD'),
+    }
+}
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale/'),
 ]
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'BFIT',
-        'USER': 'root',
-        'PASSWORD': '123Qwe123=',
-        'HOST': '127.0.0.1',
-        'PORT': 3306,
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'BFIT',
+#         'USER': 'root',
+#         'PASSWORD': '123Qwe123=',
+#         'HOST': '127.0.0.1',
+#         'PORT': 3306,
+#     }
+# }
 
 
 
