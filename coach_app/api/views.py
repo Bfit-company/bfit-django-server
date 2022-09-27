@@ -16,6 +16,8 @@ from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
 from user_app.models import UserDB
 
+MAX_LIMIT = 100
+
 
 def add_locations(locations, coach_obj):
     location_pk_arr = []
@@ -162,9 +164,6 @@ def coach_list_sorted_by_date_joined(request):
 
         serializer = CoachSerializer(coaches, many=True)
         return Response(serializer.data)
-
-
-MAX_LIMIT = 100
 
 
 # get coach list search by parameters
