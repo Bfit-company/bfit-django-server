@@ -19,6 +19,7 @@ class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = RatingDB
         fields = "__all__"
+        extra_kwargs = {'person_id': {'required': False}}
 
 
 class RatesSerializer(serializers.ModelSerializer):

@@ -18,6 +18,7 @@ class RatingDB(models.Model):
     rating_coach_id = models.ForeignKey(CoachDB, related_name="rates", on_delete=models.CASCADE)
     rating = models.IntegerField(validators=[MaxValueValidator(5), MinValueValidator(1)],
                                  blank=False, null=False, default=1)
+    review = models.TextField(default="")
     created = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:

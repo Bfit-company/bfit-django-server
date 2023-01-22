@@ -133,12 +133,12 @@ class RatingDetailUpdate(GenericAPIView):
         rating_obj = RatingDB.objects.filter(person_id=person_id,
                                              rating_coach_id=request.data["rating_coach_id"])
         data = request.data
+        data.update({"person_id": person_id})
         if rating_obj.exists():
             rating_obj = rating_obj.first()
             return rating_handler(data, rating_obj, rating_obj.rating, method="PUT")
 
         else:
-            data.update({"person_id": person_id})
             return rating_handler(data, method="POST")
 
             # rating_handler(request.data, rating_obj, rating_obj.rating,method="PUT")
@@ -146,3 +146,12 @@ class RatingDetailUpdate(GenericAPIView):
         #                                person_id=request.data["person_id"],
         #                                rating_coach_id=request.data["rating_coach_id"])
         # return rating_handler(request, rating_obj, rating_obj.rating)
+
+
+class GetAllCoachRating(GenericAPIView):
+    serializer_class = RatingSerializer
+
+    def get(self, request, coach_id):
+        rating_coach_list = RatingDB.objects.filter(rating_coach_id=coach_id)
+        serializer = RatingSerializer(rating_coach_list, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
