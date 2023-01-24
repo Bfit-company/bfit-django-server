@@ -141,17 +141,14 @@ class RatingDetailUpdate(GenericAPIView):
         else:
             return rating_handler(data, method="POST")
 
-            # rating_handler(request.data, rating_obj, rating_obj.rating,method="PUT")
-        # rating_obj = get_object_or_404(RatingDB,
-        #                                person_id=request.data["person_id"],
-        #                                rating_coach_id=request.data["rating_coach_id"])
-        # return rating_handler(request, rating_obj, rating_obj.rating)
-
 
 class GetAllCoachRating(GenericAPIView):
+    '''
+    getting all the rating with review for specific coach
+    '''
     serializer_class = RatingSerializer
 
     def get(self, request, coach_id):
-        rating_coach_list = RatingDB.objects.filter(rating_coach_id=coach_id)
+        rating_coach_list = RatingDB.objects.filter(rating_coach_id=coach_id, review__isnull=False).exclude(review='')
         serializer = RatingSerializer(rating_coach_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
