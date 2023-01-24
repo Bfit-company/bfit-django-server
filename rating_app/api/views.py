@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from coach_app.api.views import ChangeCoachRating
 from coach_app.models import CoachDB
 from person_app.models import PersonDB
-from rating_app.api.serializer import GeneralRatingSerializer, RatingSerializer
+from rating_app.api.serializer import GeneralRatingSerializer, RatingSerializer, AllCoachRatingSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 import coreapi
@@ -146,9 +146,9 @@ class GetAllCoachRating(GenericAPIView):
     '''
     getting all the rating with review for specific coach
     '''
-    serializer_class = RatingSerializer
+    serializer_class = AllCoachRatingSerializer
 
     def get(self, request, coach_id):
         rating_coach_list = RatingDB.objects.filter(rating_coach_id=coach_id, review__isnull=False).exclude(review='')
-        serializer = RatingSerializer(rating_coach_list, many=True)
+        serializer = AllCoachRatingSerializer(rating_coach_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

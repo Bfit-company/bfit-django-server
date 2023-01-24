@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from sport_type_app.models import SportTypeDB
 from rating_app.models import RatingDB
 
 from django.contrib.auth import get_user_model
@@ -19,6 +18,15 @@ class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = RatingDB
         fields = "__all__"
+        extra_kwargs = {'person_id': {'required': False}}
+
+
+class AllCoachRatingSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RatingDB
+        fields = "__all__"
+        depth = 1
         extra_kwargs = {'person_id': {'required': False}}
 
 
