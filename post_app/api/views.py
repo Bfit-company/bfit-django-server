@@ -12,10 +12,9 @@ from Utils.utils import Utils
 from config import BUCKET, S3_KEY
 from person_app.models import PersonDB
 from post_app.models import PostDB
-from post_app.api.serializer import PostSerializer
-from post_app.api.permissions import PostUserOrReadOnly, AdminOrReadOnly
+from post_app.api.serializer import PostSerializer, PostDescriptionSerializer
+from post_app.api.permissions import PostUserOrReadOnly
 from rest_framework.views import APIView
-from Utils.aws.presign_url import PresignUrl
 
 s3 = S3()
 
@@ -31,8 +30,8 @@ def post_list(request):
         post_data = request.data.get("post_data")
         post_image = request.data.get("post_image")
         post_data = json.loads(post_data)
-        person_id = get_object_or_404(PersonDB,user_id=request.user.pk).pk
-        post_data.update({"person":person_id})
+        person_id = get_object_or_404(PersonDB, user_id=request.user.pk).pk
+        post_data.update({"person": person_id})
 
         serializer = PostSerializer(data=post_data)
         if serializer.is_valid():
@@ -66,6 +65,22 @@ class GetPostsDetailByPostList(APIView):
             return Response([], status=status.HTTP_404_NOT_FOUND)
 
 
+class ChangePostDescription(APIView):
+    serializer_class = PostDescriptionSerializer
+    permission_classes = [PostUserOrReadOnly]
+
+    def put(self, request, pk):
+        post = get_object_or_404(PostDB, pk=pk)
+        self.check_object_permissions(request, post)
+        serializer = PostDescriptionSerializer(post, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+
+
 class PostDetail(APIView):
     serializer_class = PostSerializer
     permission_classes = [PostUserOrReadOnly]
@@ -74,6 +89,18 @@ class PostDetail(APIView):
         post = get_object_or_404(PostDB, pk=pk)
         serializer = PostSerializer(post)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        post = get_object_or_404(PostDB, pk=pk)
+        self.check_object_permissions(request, post)
+        image_s3_path = post.image_s3_path
+        bucket = s3.get_bucket_name_from_s3_path(image_s3_path)
+        s3_key = s3.get_s3_key_from_s3_path(image_s3_path)
+        s3.delete_object(bucket=bucket, s3_key=s3_key)
+        post.delete()
+
+        return Response("Delete Successfully", status=status.HTTP_200_OK)
+'''
 
     def put(self, request, pk):
         post = get_object_or_404(PostDB, pk=pk)
@@ -100,14 +127,6 @@ class PostDetail(APIView):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+'''
 
-    def delete(self, request, pk):
-        post = get_object_or_404(PostDB, pk=pk)
-        self.check_object_permissions(request, post)
-        image_s3_path = post.image_s3_path
-        bucket = s3.get_bucket_name_from_s3_path(image_s3_path)
-        s3_key = s3.get_s3_key_from_s3_path(image_s3_path)
-        s3.delete_object(bucket=bucket, s3_key=s3_key)
-        post.delete()
 
-        return Response("Delete Successfully", status=status.HTTP_200_OK)

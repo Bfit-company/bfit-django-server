@@ -1,11 +1,19 @@
+from abc import ABC
+
 from rest_framework import serializers
 
 from Utils.aws.presign_url import PresignUrl
 from post_app.models import PostDB
 
 
-class PostSerializer(serializers.ModelSerializer):
+class PostDescriptionSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = PostDB
+        fields = ('body',)
+
+
+class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostDB
         fields = "__all__"
@@ -33,7 +41,6 @@ class PostSerializer(serializers.ModelSerializer):
         super(self.__class__, self).update(instance, validated_data)
         instance.save()
         return instance
-
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
