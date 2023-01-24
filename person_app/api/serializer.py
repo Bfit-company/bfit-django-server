@@ -4,7 +4,7 @@ from rest_framework import serializers, status
 from Utils.aws.presign_url import PresignUrl
 from person_app.models import PersonDB
 from datetime import date
-from rating_app.api.serializer import RatingSerializer
+# from rating_app.api.serializer import RatingSerializer
 from sport_type_app.api.serializer import SportTypeSerializer
 
 
@@ -20,7 +20,7 @@ class PersonSerializer(serializers.ModelSerializer):
     fav_sport = SportTypeSerializer(many=True, read_only=True)
     job_type = serializers.StringRelatedField(many=True, read_only=True)
     post = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    rating_coach = serializers.SerializerMethodField()
+    # rating_coach = serializers.SerializerMethodField()
 
     class Meta:
         model = PersonDB
@@ -49,8 +49,8 @@ class PersonSerializer(serializers.ModelSerializer):
     #     instance.save()
     #     return instance
 
-    def get_rating_coach(self, obj):
-        return RatingSerializer(obj.rating.all(), many=True).data
+    # def get_rating_coach(self, obj):
+    #     return RatingSerializer(obj.rating.all(), many=True).data
 
     def validate_birth_date(self, value):
         if self.calculate_age(born=value) <= 13:
