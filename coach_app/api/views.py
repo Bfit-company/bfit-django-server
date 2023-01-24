@@ -1,9 +1,11 @@
 import json
+
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 
+from Utils.pagination import CustomPageNumberPagination
 from Utils.utils import Utils
 from coach_app.api.permissions import CoachUserOrReadOnly
 from coach_app.api.serializer import CoachSerializer
@@ -15,6 +17,7 @@ from location_app.api.views import create_location
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
 from user_app.models import UserDB
+from rest_framework import generics
 
 MAX_LIMIT = 100
 
@@ -305,26 +308,28 @@ class CoachesForMap(APIView):
         return Response(serializer.data)
 
 
-class SearchCoach(APIView):
+class SearchCoach(generics.ListAPIView):
+    serializer_class = CoachSerializer
+    pagination_class = CustomPageNumberPagination
 
-    def get(self, request):
-        name = request.query_params.get("name")
-        rating = request.query_params.get("rating")
-        number_of_rating = request.query_params.get("number_of_rating")
-        price = request.query_params.get("price")
-        fav_sports = request.query_params.get("fav_sport")
-        country = request.query_params.get("country")
-        gender_coach_type = request.query_params.get("gender_coach_type")
-        city = request.query_params.get("city")
-        is_train_at_home = request.query_params.get("is_train_at_home") == 'true'
-        limit = request.query_params.get("limit")
+    def get_queryset(self):
+        name = self.request.query_params.get("name")
+        rating = self.request.query_params.get("rating")
+        number_of_rating = self.request.query_params.get("number_of_rating")
+        price = self.request.query_params.get("price")
+        fav_sports = self.request.query_params.get("fav_sport")
+        country = self.request.query_params.get("country")
+        gender_coach_type = self.request.query_params.get("gender_coach_type")
+        city = self.request.query_params.get("city")
+        is_train_at_home = self.request.query_params.get("is_train_at_home") == 'true'
+        # limit = self.request.query_params.get("limit")
 
         name = name.strip()
         query = Q()
         if name != '' and name is not None:
             query = query & Q(person__full_name__icontains=name)  #
-        if limit == '' and limit is not None:
-            limit = MAX_LIMIT  # max limit
+        # if limit == '' and limit is not None:
+        #     limit = MAX_LIMIT  # max limit
         if fav_sports != '' and fav_sports is not None:  # fav_sport can be more than one
             sport_type_list = [int(x) for x in fav_sports.split(',')]
             query = query & Q(person__fav_sport__in=sport_type_list)
@@ -343,8 +348,50 @@ class SearchCoach(APIView):
         if gender_coach_type != '' and gender_coach_type is not None:
             query = query & Q(gender_coach_type=gender_coach_type)
 
-        coaches = list(CoachDB.objects.select_related('person').filter(query)[:int(limit)])
+        # coaches = list()
 
-        shuffle(coaches)
-        serializer = CoachSerializer(coaches, many=True)
-        return Response(serializer.data)
+        # shuffle(coaches)
+        # serializer = CoachSerializer(coaches, many=True)
+        # return Response(serializer.data)
+        return CoachDB.objects.select_related('person').filter(query)
+        # def get(self, request):
+#     name = request.query_params.get("name")
+#     rating = request.query_params.get("rating")
+#     number_of_rating = request.query_params.get("number_of_rating")
+#     price = request.query_params.get("price")
+#     fav_sports = request.query_params.get("fav_sport")
+#     country = request.query_params.get("country")
+#     gender_coach_type = request.query_params.get("gender_coach_type")
+#     city = request.query_params.get("city")
+#     is_train_at_home = request.query_params.get("is_train_at_home") == 'true'
+#     limit = request.query_params.get("limit")
+#
+#     name = name.strip()
+#     query = Q()
+#     if name != '' and name is not None:
+#         query = query & Q(person__full_name__icontains=name)  #
+#     if limit == '' and limit is not None:
+#         limit = MAX_LIMIT  # max limit
+#     if fav_sports != '' and fav_sports is not None:  # fav_sport can be more than one
+#         sport_type_list = [int(x) for x in fav_sports.split(',')]
+#         query = query & Q(person__fav_sport__in=sport_type_list)
+#     if rating != '' and rating is not None:
+#         query = query & Q(rating__gte=rating)
+#     if country != '' and country is not None:
+#         query = query & Q(locations__city__country__name__contains=country)
+#     if city != '' and city is not None:
+#         query = query & Q(locations__city__name__contains=city)
+#     if number_of_rating != '' and number_of_rating is not None:
+#         query = query & Q(number_of_rating__gte=number_of_rating)
+#     if is_train_at_home != '' and is_train_at_home is not None:
+#         query = query & Q(is_train_at_home=is_train_at_home)
+#     if price != '' and price is not None:
+#         query = query & Q(price__lte=price)
+#     if gender_coach_type != '' and gender_coach_type is not None:
+#         query = query & Q(gender_coach_type=gender_coach_type)
+#
+#     coaches = list(CoachDB.objects.select_related('person').filter(query)[:int(limit)])
+#
+#     shuffle(coaches)
+#     serializer = CoachSerializer(coaches, many=True)
+#     return Response(serializer.data)
