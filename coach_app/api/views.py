@@ -4,6 +4,7 @@ from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
+from django.db.models import QuerySet
 
 from Utils.pagination import CustomPageNumberPagination
 from Utils.utils import Utils
@@ -13,7 +14,7 @@ from coach_app.models import CoachDB
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from random import shuffle
-from location_app.api.views import create_location
+from location_app.api.views import create_location, distance_location
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
 from user_app.models import UserDB
@@ -312,49 +313,102 @@ class SearchCoach(generics.ListAPIView):
     serializer_class = CoachSerializer
     pagination_class = CustomPageNumberPagination
 
-    def get_queryset(self):
-        name = self.request.query_params.get("name")
-        rating = self.request.query_params.get("rating")
-        number_of_rating = self.request.query_params.get("number_of_rating")
-        price = self.request.query_params.get("price")
-        fav_sports = self.request.query_params.get("fav_sport")
-        country = self.request.query_params.get("country")
-        gender_coach_type = self.request.query_params.get("gender_coach_type")
-        city = self.request.query_params.get("city")
-        is_train_at_home = self.request.query_params.get("is_train_at_home") == 'true'
-        # limit = self.request.query_params.get("limit")
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        if not isinstance(queryset, list) and not isinstance(queryset, QuerySet) and queryset["error"]:
+            return Response(queryset, status=400)
+        queryset = self.filter_queryset(queryset)
 
-        name = name.strip()
-        query = Q()
-        if name != '' and name is not None:
-            query = query & Q(person__full_name__icontains=name)  #
-        # if limit == '' and limit is not None:
-        #     limit = MAX_LIMIT  # max limit
-        if fav_sports != '' and fav_sports is not None:  # fav_sport can be more than one
-            sport_type_list = [int(x) for x in fav_sports.split(',')]
-            query = query & Q(person__fav_sport__in=sport_type_list)
-        if rating != '' and rating is not None:
-            query = query & Q(rating__gte=rating)
-        if country != '' and country is not None:
-            query = query & Q(locations__city__country__name__contains=country)
-        if city != '' and city is not None:
-            query = query & Q(locations__city__name__contains=city)
-        if number_of_rating != '' and number_of_rating is not None:
-            query = query & Q(number_of_rating__gte=number_of_rating)
-        if is_train_at_home != '' and is_train_at_home is not None:
-            query = query & Q(is_train_at_home=is_train_at_home)
-        if price != '' and price is not None:
-            query = query & Q(price__lte=price)
-        if gender_coach_type != '' and gender_coach_type is not None:
-            query = query & Q(gender_coach_type=gender_coach_type)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        try:
+            name = self.request.query_params.get("name")
+            rating = self.request.query_params.get("rating")
+            number_of_rating = self.request.query_params.get("number_of_rating")
+            price = self.request.query_params.get("price")
+            fav_sports = self.request.query_params.get("fav_sport")
+            country = self.request.query_params.get("country")
+            gender_coach_type = self.request.query_params.get("gender_coach_type")
+            city = self.request.query_params.get("city")
+            is_train_at_home = self.request.query_params.get("is_train_at_home") == 'true'
+            sort_by = self.request.query_params.get("sort_by")
+            long = self.request.query_params.get("long")
+            lat = self.request.query_params.get("lat")
+            # limit = self.request.query_params.get("limit")
+
+            name = name.strip()
+            query = Q()
+            if name != '' and name is not None:
+                query = query & Q(person__full_name__icontains=name)  #
+            # if limit == '' and limit is not None:
+            #     limit = MAX_LIMIT  # max limit
+            if fav_sports != '' and fav_sports is not None:  # fav_sport can be more than one
+                sport_type_list = [int(x) for x in fav_sports.split(',')]
+                query = query & Q(person__fav_sport__in=sport_type_list)
+            if rating != '' and rating is not None:
+                query = query & Q(rating__gte=rating)
+            if country != '' and country is not None:
+                query = query & Q(locations__city__country__name__contains=country)
+            if city != '' and city is not None:
+                query = query & Q(locations__city__name__contains=city)
+            if number_of_rating != '' and number_of_rating is not None:
+                query = query & Q(number_of_rating__gte=number_of_rating)
+            if is_train_at_home != '' and is_train_at_home is not None:
+                query = query & Q(is_train_at_home=is_train_at_home)
+            if price != '' and price is not None:
+                query = query & Q(price__lte=price)
+            if gender_coach_type != '' and gender_coach_type is not None:
+                query = query & Q(gender_coach_type=gender_coach_type)
+
+            if sort_by != '' and sort_by is not None:
+                if sort_by == "location":
+                    if long != '' and long is not None and \
+                            lat != '' and lat is not None:
+                        try:
+                            long, lat = check_long_lat(long, lat)
+                        except Exception as ex:
+                            return {"error": "invalid long and lat"}
+
+                        query = query & Q(locations__long__isnull=False, locations__lat__isnull=False)
+                        filtered_coach_list = CoachDB.objects.select_related('person').filter(query)
+
+                        filtered_coach_list = distance_location(long, lat, filtered_coach_list)
+                    else:
+                        return {"error": "sort by location must have long and lat"}
+                else:
+                    try:
+                        filtered_coach_list = CoachDB.objects.select_related('person').filter(query).order_by(sort_by)
+                    except Exception as ex:
+                        return {"error": "invalid parameter"}
+
+
+            # elif sort_by."price":
+            #     filtered_coach_list = CoachDB.objects.select_related('person').filter(query).order_by(sort_by)
+            # elif sort_by == 'rating':
+            #     filtered_coach_list = CoachDB.objects.select_related('person').filter(query).order_by('-rating')
+            # elif sort_by == 'date_joined':
+            #     filtered_coach_list = CoachDB.objects.select_related('person').filter(query).order_by('-date_joined')
+            else:
+                filtered_coach_list = CoachDB.objects.select_related('person').filter(query)
+        except Exception as ex:
+            return {"error": "invalid parameter"}
 
         # coaches = list()
 
         # shuffle(coaches)
         # serializer = CoachSerializer(coaches, many=True)
         # return Response(serializer.data)
-        return CoachDB.objects.select_related('person').filter(query)
+        return filtered_coach_list
         # def get(self, request):
+
+
 #     name = request.query_params.get("name")
 #     rating = request.query_params.get("rating")
 #     number_of_rating = request.query_params.get("number_of_rating")
@@ -395,3 +449,10 @@ class SearchCoach(generics.ListAPIView):
 #     shuffle(coaches)
 #     serializer = CoachSerializer(coaches, many=True)
 #     return Response(serializer.data)
+
+def check_long_lat(long, lat):
+    long = float(long)
+    lat = float(lat)
+    if not (-90 < long < 90) or not (-90 < lat < 90):
+        raise
+    return long, lat

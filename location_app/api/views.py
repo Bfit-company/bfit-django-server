@@ -9,9 +9,10 @@ from Utils.utils import Utils
 from coach_app.models import CoachDB
 from location_app.models import LocationDB, CountryDB, CityDB
 from location_app.api.serializer import LocationSerializer, CitySerializer, CountrySerializer
-from coach_app.api.serializer import CoachSerializer
-# from location_app.api.permissions import
+
 from rest_framework.views import APIView
+
+from geopy.distance import distance
 
 
 # def checkCountry(country):
@@ -39,6 +40,32 @@ from rest_framework.views import APIView
 #         return city_obj
 #     return None
 
+def distance_location(long, lat, filtered_coach_list=None):
+    '''
+    create a sorted list of all the locations that close to the current user
+    '''
+    user_cord = (long, lat)
+    distance_list = []
+    serializer_list = []
+    if filtered_coach_list is None:
+        coaches = list(CoachDB.objects.filter(locations__long__isnull=False, locations__lat__isnull=False))
+    else:
+        coaches = list(filtered_coach_list)
+    for coach in coaches:
+        coach_locations = list(coach.locations.all())
+        for location in coach_locations:
+            coach_cord = (location.long, location.lat)
+            distance_dict = {
+                "distance": distance(user_cord, coach_cord).km,
+                "coach": coach
+            }
+            distance_list.append(distance_dict)
+    sorted_distance_list = sorted(distance_list, key=lambda d: d['distance'])
+    for distance_item in sorted_distance_list:
+        serializer_list.append(distance_item["coach"])
+    return serializer_list
+
+
 def create_location(data):
     city = data.get("city")
     location_obj = data
@@ -49,13 +76,14 @@ def create_location(data):
         except ObjectDoesNotExist:
             return Response("not found", status=status.HTTP_404_NOT_FOUND)
         except Exception as ex:
-            return Response(ex.args,status=status.HTTP_404_NOT_FOUND)
+            return Response(ex.args, status=status.HTTP_404_NOT_FOUND)
         if not isinstance(response, LocationDB):  # if there is some error
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class LocationList(APIView):
     def get(self, request):
@@ -176,5 +204,3 @@ class GetLocationsDetailByLocationList(APIView):
             return Response(serializer.data, status.HTTP_200_OK)
         else:
             return Response({"error": "not found"}, status.HTTP_404_NOT_FOUND)
-
-
