@@ -369,6 +369,8 @@ class SearchCoach(generics.ListAPIView):
 
             if sort_by != '' and sort_by is not None:
                 if sort_by == "location":
+                    query = query & Q(locations__long__isnull=False, locations__lat__isnull=False)
+
                     if long != '' and long is not None and \
                             lat != '' and lat is not None:
                         try:
@@ -376,12 +378,11 @@ class SearchCoach(generics.ListAPIView):
                         except Exception as ex:
                             return {"error": "invalid long and lat"}
 
-                        query = query & Q(locations__long__isnull=False, locations__lat__isnull=False)
                         filtered_coach_list = CoachDB.objects.select_related('person').filter(query)
-
                         filtered_coach_list = distance_location(long, lat, filtered_coach_list)
                     else:
-                        return {"error": "sort by location must have long and lat"}
+                        filtered_coach_list = CoachDB.objects.select_related('person').filter(query).order_by("locations__city")
+                        # return {"error": "sort by location must have long and lat"}
                 else:
                     try:
                         filtered_coach_list = CoachDB.objects.select_related('person')\
