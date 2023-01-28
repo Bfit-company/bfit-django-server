@@ -384,7 +384,10 @@ class SearchCoach(generics.ListAPIView):
                         return {"error": "sort by location must have long and lat"}
                 else:
                     try:
-                        filtered_coach_list = CoachDB.objects.select_related('person').filter(query).order_by(sort_by)
+                        filtered_coach_list = CoachDB.objects.select_related('person')\
+                            .filter(query)\
+                            .order_by(sort_by)\
+                            .distinct()
                     except Exception as ex:
                         return {"error": "invalid parameter"}
 
@@ -396,7 +399,9 @@ class SearchCoach(generics.ListAPIView):
             # elif sort_by == 'date_joined':
             #     filtered_coach_list = CoachDB.objects.select_related('person').filter(query).order_by('-date_joined')
             else:
-                filtered_coach_list = CoachDB.objects.select_related('person').filter(query)
+                filtered_coach_list = CoachDB.objects.select_related('person')\
+                    .filter(query)\
+                    .distinct()
         except Exception as ex:
             return {"error": "invalid parameter"}
 
