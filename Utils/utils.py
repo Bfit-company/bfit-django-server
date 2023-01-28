@@ -1,3 +1,6 @@
+import re
+
+import phonenumbers as phonenumbers
 from django.db.models import Q
 from datetime import datetime, timezone
 
@@ -6,6 +9,7 @@ from Utils.aws.s3 import S3
 from config import S3_KEY, BUCKET
 from job_type_app.models import JobTypeDB
 from person_app.models import PersonDB
+from phonenumbers import parse, is_valid_number
 
 
 class Utils:
@@ -72,3 +76,15 @@ class Utils:
             return s3_path
         except Exception as ex:
             raise ex
+
+    @staticmethod
+    def is_phone_number_valid(phone_number):
+        try:
+            if (re.search('[a-zA-Z]', phone_number)):
+                raise Exception
+            parsed_phone_number = parse(phone_number, None)
+            if not is_valid_number(parsed_phone_number):
+                raise Exception
+            return True
+        except:
+            return False

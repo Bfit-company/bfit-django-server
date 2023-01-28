@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from Utils.aws.s3 import S3
 from Utils.utils import Utils
@@ -11,7 +12,6 @@ from person_app.api.permissions import PersonUserOrReadOnly
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
 from rest_framework.response import Response
-
 from sport_type_app.models import SportTypeDB
 from trainee_app.models import TraineeDB
 from rest_framework.views import APIView
@@ -190,10 +190,14 @@ def phone_number_exists(phone_number, person_id=None):
 
 
 class IsPhoneNumberExists(APIView):
+    permission_classes = [AllowAny]
 
     def get(self, request, phone_number):
-        is_exists = phone_number_exists(phone_number=phone_number)
-        return Response({"result": is_exists})
+        if Utils.is_phone_number_valid(phone_number):
+            is_exists = phone_number_exists(phone_number=phone_number)
+            return Response({"result": is_exists}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UploadProfileImage(APIView):
