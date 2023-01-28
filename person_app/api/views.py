@@ -125,7 +125,7 @@ def update_person(data, pk):
     serializer = PersonSerializer(person, data=data, partial=True)
     if serializer.is_valid():
         if data.get('phone_number') and phone_number_exists(data["phone_number"], pk):
-            return Response({"error": "invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Phone number already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
         # check if there is change in fav_sports
         if data.get("fav_sport"):
@@ -187,6 +187,13 @@ def phone_number_exists(phone_number, person_id=None):
         if person_id and cur_person.id == person_id:
             response = False
     return response
+
+
+class IsPhoneNumberExists(APIView):
+
+    def get(self, request, phone_number):
+        is_exists = phone_number_exists(phone_number=phone_number)
+        return Response({"result": is_exists})
 
 
 class UploadProfileImage(APIView):
