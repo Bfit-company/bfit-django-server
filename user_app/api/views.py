@@ -7,9 +7,12 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, schema, permission_classes
 import re
+from rest_framework import permissions
+
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 import requests
+from rest_framework import generics
 
 from Utils.aws.presign_url import PresignUrl
 from Utils.aws.s3 import S3
@@ -28,7 +31,7 @@ from trainee_app.api.serializer import TraineeSerializer
 from trainee_app.models import TraineeDB
 from rest_framework.authtoken.models import Token
 from user_app.models import UserDB
-from user_app.api.serializer import RegistrationSerializer
+from user_app.api.serializer import RegistrationSerializer, LogoutSerializer
 from rest_framework.schemas import AutoSchema
 import coreapi
 from person_app.api.views import create_person, update_person
@@ -115,9 +118,21 @@ def login_user(request_data):
             data['user_id'] = user_id
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-    token, created = Token.objects.get_or_create(user=user)
-    data["token"] = token.key
+    # token, created = Token.objects.get_or_create(user=user)
+    token = user.token()
+    data["token"] = token
     return JsonResponse(data)
+
+
+class LogoutAPIView(generics.GenericAPIView):
+    serializer_class = LogoutSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['POST', ])
@@ -150,7 +165,8 @@ def registration_view(request):
             account = serializer.save()
             data['id'] = account.id
             data['email'] = account.email
-            token = Token.objects.get(user=account).key
+            # token = Token.objects.get(user=account).key
+            token = account.token()
             data['token'] = token
             data['response'] = 'Registration Successful'
 
@@ -223,7 +239,8 @@ def register(user_data):
         account = serializer.save()
         data['id'] = account.id
         data['email'] = account.email
-        token = Token.objects.get(user=account).key
+        token = account.token()
+        # token = Token.objects.get(user=account).key
         data['token'] = token
         data['response'] = 'Registration Successful'
     else:
@@ -395,7 +412,6 @@ class UpdateUser(APIView):
             token.delete()
         user.delete()
         return Response("Delete Successfully", status=status.HTTP_200_OK)
-
 
 
 from rest_framework import status

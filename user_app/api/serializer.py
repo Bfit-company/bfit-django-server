@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 import re
 from user_app.models import UserDB
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework.response import Response
 
 User = get_user_model()
 
@@ -61,9 +63,27 @@ class ChangePasswordSerializer(serializers.Serializer):
     """
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+
 # #todo: in future
 # class LoginSerializer(serializers.ModelSerializer):
 #
 #     class Meta:
 #         model = User
 #         fields = ['email', 'password']
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+    error_messages = {
+        'bad_token': "Token is expired or invalid"
+    }
+
+    def validate(self, attrs):
+        self.token = attrs['refresh']
+        return attrs
+
+    def save(self, **kwargs):
+        try:
+            RefreshToken(self.token).blacklist()
+        except TokenError:
+            return Response({"error":"Token is expired or invalid"})
