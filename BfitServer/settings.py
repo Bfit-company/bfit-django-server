@@ -40,8 +40,8 @@ ALLOWED_HOSTS = ["*"]
 
 # Application definition
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=365),
     'AUTH_HEADER_TYPES': ('Bearer',),
 
 }
@@ -69,11 +69,6 @@ INSTALLED_APPS = [
     'django_ses',
     'rest_framework_simplejwt.token_blacklist',
 ]
-
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=365)}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
