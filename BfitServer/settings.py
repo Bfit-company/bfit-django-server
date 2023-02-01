@@ -35,7 +35,7 @@ AWS_SES_REGION_ENDPOINT = 'email.eu-central-1.amazonaws.com'
 DEBUG = True if os.getenv("DEBUG") == "TRUE" else False
 
 ALLOWED_HOSTS = ["*"]
-# CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True
 
 
 # Application definition
@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'django_ses',
     'rest_framework_simplejwt.token_blacklist',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
