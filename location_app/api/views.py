@@ -46,7 +46,7 @@ def distance_location(long, lat, filtered_coach_list=None):
     '''
     user_cord = (long, lat)
     distance_list = []
-    serializer_list = []
+    serializer_dict = {}
     if filtered_coach_list is None:
         coaches = list(CoachDB.objects.filter(locations__long__isnull=False, locations__lat__isnull=False))
     else:
@@ -62,8 +62,8 @@ def distance_location(long, lat, filtered_coach_list=None):
             distance_list.append(distance_dict)
     sorted_distance_list = sorted(distance_list, key=lambda d: d['distance'])
     for distance_item in sorted_distance_list:
-        serializer_list.append(distance_item["coach"])
-    return serializer_list
+        serializer_dict[distance_item["coach"].id] = distance_item["coach"]
+    return list(serializer_dict.values())
 
 
 def create_location(data):
