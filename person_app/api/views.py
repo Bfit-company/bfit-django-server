@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -120,8 +122,9 @@ def person_list(request):
         #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def update_person(data, pk):
-    person = get_object_or_404(PersonDB, pk=pk)
+def update_person(data, pk, person, profile_img):
+    data.update({"profile_image_s3_path": Utils.profile_img_s3_path(file=profile_img,
+                                                                    email=person.user.email)})
     serializer = PersonSerializer(person, data=data, partial=True)
     if serializer.is_valid():
         if data.get('phone_number') and phone_number_exists(data["phone_number"], pk):
@@ -138,20 +141,22 @@ def update_person(data, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# @api_view(['GET', 'DELETE', 'PUT'])
-# def person_detail(request, pk):
 class PersonDetail(APIView):
     permission_classes = [PersonUserOrReadOnly]
 
-    def get(self,request,pk):
+    def get(self, request, pk):
         person = get_object_or_404(PersonDB, pk=pk)
         serializer = PersonSerializer(person)
         return Response(serializer.data)
 
     def put(self, request, pk):
+        request_data = request.data["user_data"]
+        request_data = json.loads(request_data)  # str to dict
+        profile_img = request.data.get("file")
+
         person = get_object_or_404(PersonDB, pk=pk)
         self.check_object_permissions(request, person)
-        return update_person(request.data, pk)
+        return update_person(data=request_data, pk=pk, person=person, profile_img=profile_img)
 
     def delete(self, request, pk):
         trainee = get_object_or_404(PersonDB, pk=pk)
@@ -222,3 +227,14 @@ class UploadProfileImage(APIView):
             serializer.save()
             return Response(status=status.HTTP_200_OK, data=serializer.data)
         return Response(status=status.HTTP_400_BAD_REQUEST, data="wrong parameters")
+
+# def change_person_image(person_serializer, profile_img):
+#         try:
+#             # person = request_data.get("person")
+#             person.update({"profile_image_s3_path": Utils.profile_img_s3_path(file=profile_img,
+#                                                                               email=person.user.email)})
+#         except Exception as ex:
+#             raise {"error": "could not success to save profile image",
+#                    "Exception": ex}
+#
+#         person_serializer.save()

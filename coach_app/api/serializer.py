@@ -9,13 +9,13 @@ from person_app.api.serializer import PersonSerializer
 class CoachSerializer(serializers.ModelSerializer):
     person = PersonSerializer(read_only=True)
     rates = serializers.SerializerMethodField()
-    locations = LocationSerializer(many=True,read_only=True)
+    locations = LocationSerializer(many=True, read_only=True)
 
     def update(self, instance, validated_data):
         try:
             locations = validated_data.pop('locations')
-            instance.locations.clear()
             if locations:
+                instance.locations.clear()
                 for location in locations:
                     city = location.get('city')
                     locations_serializer = LocationSerializer(data=location)

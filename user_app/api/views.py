@@ -34,7 +34,7 @@ from user_app.models import UserDB
 from user_app.api.serializer import RegistrationSerializer, LogoutSerializer
 from rest_framework.schemas import AutoSchema
 import coreapi
-from person_app.api.views import create_person, update_person
+from person_app.api.views import create_person
 from coach_app.api.views import create_coach
 from trainee_app.api.views import create_trainee
 
@@ -365,32 +365,32 @@ def isValidateUserRegister(password, password2, email):
 
 class UpdateUser(APIView):
 
-    def put(self, request):
-        try:
-            data = {}
-            person_entity = PersonDB()  # does not must
-            if request.data["coach"]:
-                data = request.data["coach"]
-                person_entity = get_object_or_404(CoachDB, pk=request.data["coach"]["id"])
-                serializer = CoachSerializer(person_entity, data=data, partial=True)
-
-            elif request.data["trainee"]:
-                data = request.data["trainee"]
-                person_entity = get_object_or_404(CoachDB, pk=request.data["trainee"]["id"])
-                serializer = TraineeSerializer(person_entity, data=data, pertial=True)
-
-            if data.get("person"):
-                response = update_person(data["person"], person_entity.person_id)
-                if response.status_code != 200:
-                    return Response(response)
-
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as ex:
-            return Response(ex, status=status.HTTP_400_BAD_REQUEST)
+    # def put(self, request):
+    #     try:
+    #         data = {}
+    #         person_entity = PersonDB()  # does not must
+    #         if request.data["coach"]:
+    #             data = request.data["coach"]
+    #             person_entity = get_object_or_404(CoachDB, pk=request.data["coach"]["id"])
+    #             serializer = CoachSerializer(person_entity, data=data, partial=True)
+    #
+    #         elif request.data["trainee"]:
+    #             data = request.data["trainee"]
+    #             person_entity = get_object_or_404(CoachDB, pk=request.data["trainee"]["id"])
+    #             serializer = TraineeSerializer(person_entity, data=data, pertial=True)
+    #
+    #         if data.get("person"):
+    #             response = update_person(data["person"], person_entity.person_id)
+    #             if response.status_code != 200:
+    #                 return Response(response)
+    #
+    #         if serializer.is_valid():
+    #             serializer.save()
+    #             return Response(serializer.data, status=status.HTTP_200_OK)
+    #         else:
+    #             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #     except Exception as ex:
+    #         return Response(ex, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         user = get_object_or_404(UserDB, pk=pk)
