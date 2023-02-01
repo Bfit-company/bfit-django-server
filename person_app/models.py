@@ -6,7 +6,6 @@ from sport_type_app.models import SportTypeDB
 from phonenumber_field.modelfields import PhoneNumberField
 
 # from trainee_app.models import TraineeDB
-from user_app.models import UserDB
 from django.conf import settings
 
 User = settings.AUTH_USER_MODEL

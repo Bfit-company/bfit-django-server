@@ -23,6 +23,8 @@ class CoachDB(models.Model):
     date_joined = models.DateTimeField(verbose_name='date_joined', auto_now_add=True)
     locations = models.ManyToManyField(LocationDB, related_name="location")
     is_whatsapp_contact = models.BooleanField(default=False)
+    is_phone_contact = models.BooleanField(default=False)
+
 
 
     # todo:

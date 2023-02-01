@@ -66,17 +66,6 @@ class RegistrationViewSchema(AutoSchema):
         return manual_fields + extra_fields
 
 
-# class CreateFullUserViewSchema(AutoSchema):
-#     def get_manual_fields(self, path, method):
-#         extra_fields = []
-#         if method.lower() in ['post', 'put']:
-#             extra_fields = [
-#                 coreapi.Field({'person':2})
-#             ]
-#         manual_fields = super().get_manual_fields(path, method)
-#         return manual_fields + extra_fields
-
-
 def login_user(request_data):
     data = {}
 
@@ -118,7 +107,6 @@ def login_user(request_data):
             data['user_id'] = user_id
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-    # token, created = Token.objects.get_or_create(user=user)
     token = user.token()
     data["token"] = token
     return JsonResponse(data)
@@ -209,7 +197,7 @@ def user_registration_validate(data):
         return Response({'error': 'Email already exist'}, status=status.HTTP_400_BAD_REQUEST)
 
     # check password validation
-    reg = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,18}$"
+    reg = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&`~$%^()-=+_{}><:;\|[,\].\"\'])[A-Za-z\d@$!%*#?&`~$%^()-=+_{}><:;\]|[,.\"\']{8,18}$"
     match_re = re.compile(reg)
     res = re.search(match_re, password)
 
