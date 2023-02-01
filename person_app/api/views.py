@@ -123,8 +123,9 @@ def person_list(request):
 
 
 def update_person(data, pk, person, profile_img):
-    data.update({"profile_image_s3_path": Utils.profile_img_s3_path(file=profile_img,
-                                                                    email=person.user.email)})
+    if profile_img:
+        data.update({"profile_image_s3_path": Utils.profile_img_s3_path(file=profile_img,
+                                                                        email=person.user.email)})
     serializer = PersonSerializer(person, data=data, partial=True)
     if serializer.is_valid():
         if data.get('phone_number') and phone_number_exists(data["phone_number"], pk):
