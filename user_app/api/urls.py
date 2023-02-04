@@ -16,7 +16,7 @@ from user_app.api.views import (
 # from user_app.api.views import login_view
 
 urlpatterns = [
-    path('login', login_view, name='login'),
+    path('login/', login_view, name='login'),
     path('register/', registration_view, name='register'),
     path('register-validate/', register_validation, name='register_validation'),
     path('full_user_create/', full_user_create, name='full_user_create'),
