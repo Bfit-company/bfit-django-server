@@ -1,34 +1,23 @@
-import boto3
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, schema, permission_classes
 import re
 from rest_framework import permissions
+from django.core.mail import send_mail
 
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import IsAuthenticated, AllowAny
-import requests
+from rest_framework.permissions import AllowAny
 from rest_framework import generics
-
-from Utils.aws.presign_url import PresignUrl
-from Utils.aws.s3 import S3
 from Utils.utils import Utils
 from rest_framework.utils import json
-from django.db.models import Q, F, Value as V
+from django.db.models import Q
 from rest_framework.views import APIView
-from rest_framework.generics import GenericAPIView
 from coach_app.api.serializer import CoachSerializer
 from coach_app.models import CoachDB
-from config import S3_KEY, BUCKET
-from job_type_app.models import JobTypeDB
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
-from trainee_app.api.serializer import TraineeSerializer
-from trainee_app.models import TraineeDB
 from rest_framework.authtoken.models import Token
 from user_app.models import UserDB
 from user_app.api.serializer import RegistrationSerializer, LogoutSerializer
@@ -36,7 +25,6 @@ from rest_framework.schemas import AutoSchema
 import coreapi
 from person_app.api.views import create_person
 from coach_app.api.views import create_coach
-from trainee_app.api.views import create_trainee
 
 User = get_user_model()
 
@@ -91,6 +79,9 @@ def login_user(request_data):
             serializer = CoachSerializer(coach)
             data = serializer.data
             is_coach = True
+            if not data["coach"]["is_confirmed"]:
+                return Response({"msg":"the coach is not confirmed"}, status=status.HTTP_202_ACCEPTED)
+
     except ObjectDoesNotExist:
         is_coach = False
         print("coach not exist")
@@ -249,6 +240,7 @@ def create_full_user(data):
          create full user with all the parameters
          UI send form data because image file
      '''
+    is_coach = False
     request_data = data["user_data"]
     request_data = json.loads(request_data)  # str to dict
     profile_img = data.get("file")
@@ -277,6 +269,7 @@ def create_full_user(data):
                 response = create_coach(coach_obj)
                 if response.status_code == status.HTTP_200_OK:
                     data = response.data
+                    is_coach = True
                 else:
                     data['error'] = response.data
             else:
@@ -284,7 +277,7 @@ def create_full_user(data):
 
         if "error" in data.keys():
             PersonDB.objects.filter(id=person["id"]).delete()
-            UserDB.objects.get(pk=data["user"]).delete()
+            UserDB.objects.get(pk=person["user"]).delete()
             return JsonResponse(data["error"], status=status.HTTP_400_BAD_REQUEST, safe=False)
         else:  # the user created successfully
             if profile_img != '' and profile_img is not None:  # save profile image if exists
@@ -303,6 +296,22 @@ def create_full_user(data):
         return Response(response.data, status=status.HTTP_400_BAD_REQUEST)
 
     data.update({'token': token})
+    if is_coach:
+        send_mail(
+            # title:
+            "New Coach {}".format(person["full_name"]),
+            # message:
+            f'full_name {person["full_name"]}, '
+            f'phone_number {person["phone_number"]}, '
+            f'coach_id {data["coach"]["id"]}, '
+            f'user_id {person["user"]},'
+            f'person_id {person["id"]}',
+            # from:
+            "bfit.company1@gmail.com",
+            # to:
+            ["liadhazoot5@gmail.com"]
+        )
+        return Response({"msg": "the coach need to be confirmed"}, status=status.HTTP_202_ACCEPTED)
     return Response(response.data, status=status.HTTP_200_OK)
 
 

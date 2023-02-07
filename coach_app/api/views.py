@@ -345,10 +345,9 @@ class SearchCoach(generics.ListAPIView):
 
             name = name.strip()
             query = Q()
+            query = query & Q(is_confirmed=True)  # query just the confirmed coaches
             if name != '' and name is not None:
                 query = query & Q(person__full_name__icontains=name)  #
-            # if limit == '' and limit is not None:
-            #     limit = MAX_LIMIT  # max limit
             if fav_sports != '' and fav_sports is not None:  # fav_sport can be more than one
                 sport_type_list = [int(x) for x in fav_sports.split(',')]
                 query = query & Q(person__fav_sport__in=sport_type_list)
