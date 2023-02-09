@@ -24,7 +24,6 @@ class CoachDB(models.Model):
     locations = models.ManyToManyField(LocationDB, related_name="location")
     is_whatsapp_contact = models.BooleanField(default=True)
     is_phone_contact = models.BooleanField(default=True)
-    is_confirmed = models.BooleanField(default=False)
 
 
 
