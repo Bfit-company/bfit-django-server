@@ -15,11 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
-from rest_framework_swagger.views import get_swagger_view
+
 from Utils.aws.presign_url import PresignUrl
-schema_view = get_swagger_view(title='My Project Swagger')
 
 urlpatterns = [
                   path('admin/', admin.site.urls),
@@ -34,5 +31,4 @@ urlpatterns = [
                   path('job_type/', include('job_type_app.api.urls')),
                   path('social_auth/', include('social_auth.api.urls')),
                   path('presign-url/', PresignUrl.as_view()),
-                  path('', schema_view),
-              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+              ]

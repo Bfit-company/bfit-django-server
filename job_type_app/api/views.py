@@ -26,7 +26,7 @@ def job_type_list_view(request):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response({"error":serializer.errors})
 
 
 @api_view(['GET', 'DELETE', 'PUT'])
@@ -43,7 +43,7 @@ def job_type_detail_view(request, pk):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':
         trainee = get_object_or_404(JobTypeDB, pk=pk)

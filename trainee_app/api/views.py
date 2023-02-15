@@ -32,7 +32,7 @@ def create_trainee(data):
                 return Response({"error": "the trainee already exist"}, status=status.HTTP_400_BAD_REQUEST)
 
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
 def trainee_list(request):
@@ -85,7 +85,7 @@ def trainee_detail(request, pk):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        return Response({"error":serializer.errors}, status.HTTP_400_BAD_REQUEST)
         # trainee = get_object_or_404(TraineeDB, pk=pk)
         # serializer = TraineeSerializer(trainee, data=request.data)
         # if serializer.is_valid():

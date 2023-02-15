@@ -52,7 +52,7 @@ def post_list(request):
             serializer = PostSerializer(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetPostsDetailByPostList(APIView):
@@ -77,7 +77,7 @@ class ChangePostDescription(APIView):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response({"error":serializer.errors},status=status.HTTP_400_BAD_REQUEST)
 
 
 

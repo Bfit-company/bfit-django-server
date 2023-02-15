@@ -30,4 +30,4 @@ class CoachDB(models.Model):
     # todo:
     # post_id , practice
     def __str__(self):
-        return "coach - " + self.person.full_name
+        return "coach - " + self.person.full_name + "\n id: " + str(self.id)

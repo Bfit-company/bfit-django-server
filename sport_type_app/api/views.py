@@ -32,7 +32,7 @@ class SportTypeListView(APIView):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response({"error":serializer.errors})
 
 
 # @api_view(['GET', 'DELETE', 'PUT'])
@@ -62,7 +62,7 @@ class SportTypeDetailView(APIView):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response({"error":serializer.errors})
 
     def delete(self, request, pk):
         trainee = get_object_or_404(SportTypeDB, pk=pk)
@@ -78,7 +78,7 @@ class InitSportType(APIView):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response({"error":serializer.errors})
 
 
 class SearchSportType(APIView):

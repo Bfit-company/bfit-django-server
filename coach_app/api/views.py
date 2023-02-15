@@ -1,11 +1,10 @@
 import json
 
 from django.db.models import Q
-from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework import status, permissions
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from django.db.models import QuerySet
-
 from Utils.pagination import CustomPageNumberPagination
 from Utils.utils import Utils
 from coach_app.api.permissions import CoachUserOrReadOnly
@@ -17,7 +16,6 @@ from random import shuffle
 from location_app.api.views import create_location, distance_location
 from person_app.api.serializer import PersonSerializer
 from person_app.models import PersonDB
-from user_app.models import UserDB
 from rest_framework import generics
 
 MAX_LIMIT = 100
@@ -56,10 +54,11 @@ def create_coach(data):
         except Exception as ex:
             return Response({"error": ex})
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAdminUser])
 def coach_list(request):
     if request.method == 'GET':
         all_trainee_list = CoachDB.objects.all()
@@ -83,16 +82,10 @@ class CoachDetail(APIView):
         request_data = request.data["user_data"]
         request_data = json.loads(request_data)  # str to dict
         profile_img = request.data.get("file")
-        presign_url = None
 
         coach = get_object_or_404(CoachDB, pk=pk)
         self.check_object_permissions(request, coach)
         serializer = CoachSerializer(coach, data=request_data, partial=True)
-
-        # if request.data.get("person"):
-        #     response = update_person(request.data["person"], coach.person_id)
-        #     if response.status_code != 200:
-        #         return Response(response)
 
         if serializer.is_valid():
             if profile_img != '' and profile_img is not None:  # save profile image if exists
@@ -105,10 +98,9 @@ class CoachDetail(APIView):
                            "Exception": ex}
 
             serializer.save(person=request_data.get("person"), locations=request_data.get("locations"), )
-            # if presign_url:
-            #     # serializer.data.update({"profile_image_url": presign_url})
+
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        return Response({"error": serializer.errors}, status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         trainee = get_object_or_404(CoachDB, pk=pk)
@@ -272,7 +264,7 @@ class ChangeCoachRating(APIView):
             if serializer.is_valid():
                 return serializer, Response(serializer.validated_data, status=status.HTTP_200_OK)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -295,7 +287,7 @@ class ChangeCoachRating(APIView):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 

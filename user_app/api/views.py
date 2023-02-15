@@ -312,7 +312,7 @@ def create_full_user(data):
             ["liadhazoot5@gmail.com"]
         )
         return Response({"msg": "the coach need to be confirmed"}, status=status.HTTP_202_ACCEPTED)
-    return Response(response.data, status=status.HTTP_200_OK)
+    return Response(response.data, status=status.HTTP_201_CREATED)
 
 
 # work
@@ -451,7 +451,7 @@ class ChangePasswordView(generics.UpdateAPIView):
 
             return Response(response)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserDetails(APIView):

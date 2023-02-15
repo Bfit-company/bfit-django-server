@@ -86,7 +86,7 @@ def create_person(data):
         serializer = PersonSerializer(person_obj)
         return Response(serializer.data)
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'POST'])
@@ -139,7 +139,7 @@ def update_person(data, pk, person, profile_img):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PersonDetail(APIView):

@@ -82,7 +82,7 @@ def create_location(data):
         else:
             return Response(serializer.data, status=status.HTTP_200_OK)
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LocationList(APIView):
@@ -110,7 +110,7 @@ class LocationDetail(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         location = get_object_or_404(LocationDB, pk=pk)
@@ -130,7 +130,7 @@ class CityList(APIView):
             serializer.save(country=request.data["country"])
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CityDetail(APIView):
@@ -149,7 +149,7 @@ class CityDetail(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         city = get_object_or_404(CityDB, pk=pk)
@@ -169,7 +169,7 @@ class CountryList(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CountryDetail(APIView):
@@ -188,7 +188,7 @@ class CountryDetail(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         country = get_object_or_404(CountryDB, pk=pk)

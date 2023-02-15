@@ -53,9 +53,9 @@ def rating_handler(data, rating_obj=None, preview_rating=None, method=None):
                                 status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            return Response(change_coach_rating_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": change_coach_rating_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RatingList(GenericAPIView):
@@ -101,7 +101,7 @@ class RatingDetail(GenericAPIView):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response({"error":serializer.errors})
 
     def delete(self, request, pk):
         rating = get_object_or_404(RatingDB, pk=pk)
