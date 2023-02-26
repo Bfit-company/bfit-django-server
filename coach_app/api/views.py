@@ -45,6 +45,8 @@ def create_coach(data):
             if "coach" not in person_serializer.data["job_type"]:
                 return Response({"error": "the user is not coach"})
             if not person_check.exists():
+                if person_serializer.data["phone_number"] == "" or person_serializer.data["phone_number"] == None:
+                    return Response({"error": "Phone number is required"})
                 coach_obj = serializer.save(person=PersonDB.objects.get(pk=person_id))
                 coach_obj = add_locations(data["locations"], coach_obj)
                 coach_serializer = CoachSerializer(coach_obj)
