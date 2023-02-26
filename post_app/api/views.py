@@ -20,6 +20,7 @@ s3 = S3()
 
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
 def post_list(request):
     if request.method == 'GET':
         posts_list = PostDB.objects.all()

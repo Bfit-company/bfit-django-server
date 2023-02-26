@@ -1,7 +1,7 @@
 import json
 
 from django.db.models import Q
-from rest_framework import status, permissions
+from rest_framework import status, permissions, authentication
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from django.db.models import QuerySet
@@ -71,7 +71,7 @@ def coach_list(request):
 # @api_view(['GET', 'DELETE', 'PUT'])
 # def coach_detail(request, pk):
 class CoachDetail(APIView):
-    permission_classes = [CoachUserOrReadOnly]
+    permission_classes = [CoachUserOrReadOnly, permissions.IsAuthenticated]
 
     def get(self, request, pk):
         coach = get_object_or_404(CoachDB, pk=pk)
@@ -290,6 +290,21 @@ class ChangeCoachRating(APIView):
                 return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ConfirmCoach(APIView):
+    def get(self, request, pk):
+        coach = get_object_or_404(CoachDB, pk=pk)
+        # serializer = CoachSerializer(coach)
+
+        if coach:
+            if not coach.is_confirmed:
+                coach.is_confirmed = True
+                coach.save()
+                return Response({"msg": "confirmed"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"msg": "the coach has already confirmed"}, status=status.HTTP_200_OK)
+        return Response({"error": "coach does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CoachesForMap(APIView):

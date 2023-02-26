@@ -73,6 +73,10 @@ def login_user(request_data):
 
     is_coach = False
     user_id = user.id
+    if user.is_admin and user.is_active:
+        token = user.token()
+        data["token"] = token
+        return JsonResponse(data)
     try:
         coach = CoachDB.objects.select_related('person').get(Q(person__user=user_id))
         if coach:  # check if the coach exists
@@ -109,10 +113,11 @@ class LogoutAPIView(generics.GenericAPIView):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', ])
 def logout_view(request):
@@ -438,15 +443,12 @@ class ChangePasswordView(generics.UpdateAPIView):
         if serializer.is_valid():
             # Check old password
             if not self.object.check_password(serializer.data.get("old_password")):
-                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
             # set_password also hashes the password that the user will get
             self.object.set_password(serializer.data.get("new_password"))
             self.object.save()
             response = {
-                'status': 'success',
-                'code': status.HTTP_200_OK,
-                'message': 'Password updated successfully',
-                'data': []
+                'msg': 'Password updated successfully'
             }
 
             return Response(response)

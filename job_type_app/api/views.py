@@ -6,14 +6,10 @@ from job_type_app.models import JobTypeDB
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from rest_framework.permissions import IsAuthenticated, AllowAny
-
-from user_app import models
-
-
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
 @api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAdminUser])
 def job_type_list_view(request):
     if request.method == 'GET':
         all_trainee_list = JobTypeDB.objects.all()
@@ -30,6 +26,7 @@ def job_type_list_view(request):
 
 
 @api_view(['GET', 'DELETE', 'PUT'])
+@permission_classes([IsAdminUser])
 def job_type_detail_view(request, pk):
     if request.method == 'GET':
         trainee = get_object_or_404(JobTypeDB, pk=pk)

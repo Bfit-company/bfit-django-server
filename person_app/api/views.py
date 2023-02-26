@@ -3,7 +3,7 @@ import json
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
 from Utils.aws.s3 import S3
 from Utils.utils import Utils
@@ -22,6 +22,8 @@ from user_app.models import UserDB
 
 
 class PersonList(APIView):
+    permission_classes = [IsAdminUser]
+
     def get(self, request):
         all_trainee_list = PersonDB.objects.all()
         serializer = PersonSerializer(all_trainee_list, many=True)
@@ -90,6 +92,7 @@ def create_person(data):
 
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
 def person_list(request):
     if request.method == 'GET':
         all_trainee_list = PersonDB.objects.all()
@@ -143,7 +146,7 @@ def update_person(data, pk, person, profile_img):
 
 
 class PersonDetail(APIView):
-    permission_classes = [PersonUserOrReadOnly]
+    permission_classes = [PersonUserOrReadOnly,IsAdminUser]
 
     def get(self, request, pk):
         person = get_object_or_404(PersonDB, pk=pk)
@@ -207,6 +210,7 @@ class IsPhoneNumberExists(APIView):
 
 
 class UploadProfileImage(APIView):
+    permission_classes = [IsAdminUser]
 
     def post(self, request, pk):
         person = PersonDB.objects.select_related('user').get(id=pk)
@@ -228,14 +232,3 @@ class UploadProfileImage(APIView):
             serializer.save()
             return Response(status=status.HTTP_200_OK, data=serializer.data)
         return Response(status=status.HTTP_400_BAD_REQUEST, data="wrong parameters")
-
-# def change_person_image(person_serializer, profile_img):
-#         try:
-#             # person = request_data.get("person")
-#             person.update({"profile_image_s3_path": Utils.profile_img_s3_path(file=profile_img,
-#                                                                               email=person.user.email)})
-#         except Exception as ex:
-#             raise {"error": "could not success to save profile image",
-#                    "Exception": ex}
-#
-#         person_serializer.save()

@@ -49,7 +49,7 @@ class SportTypeDetailView(APIView):
     #         permission_classes = [IsAdminUser]
     #     return [permission() for permission in permission_classes]
     # permission_classes = [AllowAny]
-
+    permission_classes = [IsAdminUser]
     def get(self, request, pk):
         sports_type = get_object_or_404(SportTypeDB, pk=pk)
         serializer = SportTypeSerializer(sports_type)
@@ -71,7 +71,7 @@ class SportTypeDetailView(APIView):
 
 
 class InitSportType(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     def post(self, request):
         serializer = SportTypeSerializer(data=request.data, many=True)
         if serializer.is_valid():

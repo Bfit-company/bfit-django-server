@@ -1,17 +1,15 @@
-import location as location
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q, F, Value as V
 from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from Utils.utils import Utils
+from coach_app.api.permissions import AdminOrReadOnly
 from coach_app.models import CoachDB
 from location_app.models import LocationDB, CountryDB, CityDB
 from location_app.api.serializer import LocationSerializer, CitySerializer, CountrySerializer
 
 from rest_framework.views import APIView
-
+from rest_framework import permissions
 from geopy.distance import distance
 
 
@@ -86,6 +84,8 @@ def create_location(data):
 
 
 class LocationList(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
     def get(self, request):
         location_list = LocationDB.objects.all()
         serializer = LocationSerializer(location_list, many=True)
@@ -96,6 +96,8 @@ class LocationList(APIView):
 
 
 class LocationDetail(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
     # permission_classes = [PostUserOrReadOnly, AdminOrReadOnly]
     def get(self, request, pk):
         location = get_object_or_404(LocationDB, pk=pk)
@@ -119,6 +121,8 @@ class LocationDetail(APIView):
 
 
 class CityList(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
     def get(self, request):
         city_list = CityDB.objects.all()
         serializer = CitySerializer(city_list, many=True)
@@ -130,11 +134,11 @@ class CityList(APIView):
             serializer.save(country=request.data["country"])
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CityDetail(APIView):
-    # permission_classes = [PostUserOrReadOnly, AdminOrReadOnly]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request, pk):
         city = get_object_or_404(CityDB, pk=pk)
@@ -149,7 +153,7 @@ class CityDetail(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         city = get_object_or_404(CityDB, pk=pk)
@@ -158,6 +162,8 @@ class CityDetail(APIView):
 
 
 class CountryList(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    # authentication_classes = []
     def get(self, request):
         country_list = CountryDB.objects.all()
         serializer = CountrySerializer(country_list, many=True)
@@ -169,11 +175,11 @@ class CountryList(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CountryDetail(APIView):
-    # permission_classes = [PostUserOrReadOnly, AdminOrReadOnly]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request, pk):
         country = get_object_or_404(CountryDB, pk=pk)
@@ -188,7 +194,7 @@ class CountryDetail(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         country = get_object_or_404(CountryDB, pk=pk)
