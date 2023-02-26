@@ -84,7 +84,7 @@ def login_user(request_data):
             data = serializer.data
             is_coach = True
             if not data["coach"]["is_confirmed"]:
-                return Response({"msg":"the coach is not confirmed"}, status=status.HTTP_202_ACCEPTED)
+                return Response({"msg":"the coach is not confirmed (cosch_id = " + data["coach"]["id"] + ")"}, status=status.HTTP_202_ACCEPTED)
 
     except ObjectDoesNotExist:
         is_coach = False
@@ -316,7 +316,7 @@ def create_full_user(data):
             # to:
             ["liadhazoot5@gmail.com"]
         )
-        return Response({"msg": "the coach need to be confirmed"}, status=status.HTTP_202_ACCEPTED)
+        return Response({"msg": "the coach need to be confirmed "+ "coach_id "+ str(data["coach"]["id"])}, status=status.HTTP_202_ACCEPTED)
     return Response(response.data, status=status.HTTP_201_CREATED)
 
 
