@@ -295,6 +295,8 @@ class ChangeCoachRating(APIView):
 
 
 class ConfirmCoach(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
     def get(self, request, pk):
         coach = get_object_or_404(CoachDB, pk=pk)
         # serializer = CoachSerializer(coach)
