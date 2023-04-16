@@ -14,13 +14,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="coachdb",
-            name="person",
-            field=models.OneToOneField(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="coach_detail",
-                to="person_app.persondb",
-            ),
-        ),
     ]
