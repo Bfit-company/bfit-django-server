@@ -312,9 +312,9 @@ def create_full_user(data):
             f'user_id {person["user"]},'
             f'person_id {person["id"]}',
             # from:
-            "bfit.company1@gmail.com",
+            "noreplay@bfitapp.net",
             # to:
-            ["liadhazoot5@gmail.com"]
+            ["bfit.company1@gmail.com"]
         )
         return Response({"msg": "the coach need to be confirmed "+ "coach_id "+ str(data["coach"]["id"])}, status=status.HTTP_202_ACCEPTED)
     return Response(response.data, status=status.HTTP_201_CREATED)

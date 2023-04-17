@@ -83,7 +83,7 @@ def create_person(data):
             person_obj = add_fav_sport(data, serializer)
             person_obj = add_job_type(person_obj, data, serializer)
         except Exception as ex:
-            return Response({"error": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "error with fav sport or job type"}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = PersonSerializer(person_obj)
         return Response(serializer.data)
