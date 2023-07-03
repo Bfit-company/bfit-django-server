@@ -65,7 +65,7 @@ def register_social_user(provider, email, user_data):
             "email": email,
             "password": os.environ.get('SOCIAL_SECRET'),
             "password2": os.environ.get('SOCIAL_SECRET'),
-            "auth_provider": "google"
+            "auth_provider": provider
         }
         request_data = user_data.get("user_data")
         if request_data is None:

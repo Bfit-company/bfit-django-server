@@ -29,6 +29,11 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 EMAIL_BACKEND = 'django_ses.SESBackend'
 
+SOCIAL_AUTH_APPLE_KEY_ID=os.getenv('SOCIAL_AUTH_APPLE_KEY_ID')
+SOCIAL_AUTH_APPLE_TEAM_ID=os.getenv('SOCIAL_AUTH_APPLE_TEAM_ID')
+CLIENT_ID=os.getenv('CLIENT_ID')
+SOCIAL_AUTH_APPLE_PRIVATE_KEY=os.getenv('SOCIAL_AUTH_APPLE_PRIVATE_KEY')
+
 AWS_SES_REGION_NAME = 'eu-central-1'
 AWS_SES_REGION_ENDPOINT = 'email.eu-central-1.amazonaws.com'
 # SECURITY WARNING: don't run with debug turned on in production!

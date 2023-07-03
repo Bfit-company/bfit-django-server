@@ -1,10 +1,31 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
-from ..api.serializer import GoogleSocialAuthSerializer
+from ..api.serializer import GoogleSocialAuthSerializer, AppleSocialAuthSerializer
 from .register import register_social_user, login_social_user
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+
+
+class SignupAppleSocialAuthView(GenericAPIView):
+    serializer_class = AppleSocialAuthSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+
+        POST with "auth_token"
+
+        Send an idtoken as from apple to get user information
+
+        """
+        user_data = request.data
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = ((serializer.validated_data)['auth_token'])
+        # user_data.pop("auth_token")
+        response_data = register_social_user(provider='google', email=data.get("email"), user_data=user_data)
+        return response_data
 
 class SignupGoogleSocialAuthView(GenericAPIView):
     serializer_class = GoogleSocialAuthSerializer
